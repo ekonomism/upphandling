@@ -1,0 +1,11 @@
+source 'https://rubygems.org'
+
+gem 'sinatra', '>= 2.0'
+gem 'puma', '>= 3.10'
+gem 'sqlite3', '~> 1.3', '>= 1.3.13'
+gem 'nokogiri', '>= 1.8'
+gem 'openssl' 
+gem 'mini_magick'
+gem 'rubyXL'
+gem 'csv'
+gem 'sequel'
