@@ -6,7 +6,6 @@ require 'open-uri'
 require 'sqlite3'
 require 'yaml' 
 require 'json'
-require 'mini_magick'
 require 'erb' 
 require 'csv'
 require 'sequel'
@@ -40,7 +39,7 @@ def initiera_databas
 end
 
 class Inkopare
-  attr_reader :inkopsandel, :snittstorlek, :lokalandel
+  attr_reader :inkopsandel, :snittstorlek, :lokalandel, :privatandel
   
   def initialize(orgnr)
     @orgnr = orgnr
@@ -48,17 +47,21 @@ class Inkopare
   
   private
   
-  def inkopsandel
+  def inkopsandel # Andel inköp av kommunens totala omsättning
     
   end  
   
-  def snittstorlek
+  def snittstorlek # Snittstorlek på leverantörer vägt efter kontraktsstorlek
     
   end
   
-  def lokalandel
+  def lokalandel # Andel som kommuner köper av lokala leverantörer
     
   end  
+  
+  def privatandel # Andel privat försäljning bland leverantörer
+    
+  end
   
 end  
 
@@ -67,12 +70,14 @@ rad = 0
 CSV.foreach("foretag_ar_2017.csv", :encoding => 'iso-8859-1', headers: true) do |foretag|
   rad += 1
   puts rad, foretag[8].encode(Encoding::UTF_8)
-  (1..1).each do |sni|
+  (1..100).each do |sni|
     filnamn = "SNI" + sni.to_s + ".csv"
-    CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";", headers: true) do |relation|
-      if foretag[0] == relation[0] then
-        puts "Relation:", foretag, relation
-        relationer.insert(Lev: relation[0].encode(Encoding::UTF_8), Lev_namn: relation[1].encode(Encoding::UTF_8), Kop: relation[2].encode(Encoding::UTF_8), Kop_namn: relation[3].encode(Encoding::UTF_8), Typ: relation[4].encode(Encoding::UTF_8), Summa: relation[9].encode(Encoding::UTF_8), AFakt: relation[10].encode(Encoding::UTF_8), SNI: relation[11].encode(Encoding::UTF_8), SNI_namn: relation[13].encode(Encoding::UTF_8), Lan: foretag[6].encode(Encoding::UTF_8), Kommun: foretag[7].encode(Encoding::UTF_8), Stlk_klass: foretag[10].encode(Encoding::UTF_8), Reg_datum: foretag[16].encode(Encoding::UTF_8), Anstallda: foretag[35].encode(Encoding::UTF_8), Omsattning: foretag[43].encode(Encoding::UTF_8), RRes: foretag[55].encode(Encoding::UTF_8), ARes: foretag[76].encode(Encoding::UTF_8)) 
+    if File.file?(filnamn) then
+      CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";", headers: true) do |relation|
+        if foretag[0] == relation[0] then
+          puts "Relation:", foretag, relation
+          relationer.insert(Lev: relation[0].encode(Encoding::UTF_8), Lev_namn: relation[1].encode(Encoding::UTF_8), Kop: relation[2].encode(Encoding::UTF_8), Kop_namn: relation[3].encode(Encoding::UTF_8), Typ: relation[4].encode(Encoding::UTF_8), Summa: relation[9].encode(Encoding::UTF_8), AFakt: relation[10].encode(Encoding::UTF_8), SNI: relation[11].encode(Encoding::UTF_8), SNI_namn: relation[13].encode(Encoding::UTF_8), Lan: foretag[6].encode(Encoding::UTF_8), Kommun: foretag[7].encode(Encoding::UTF_8), Stlk_klass: foretag[10].encode(Encoding::UTF_8), Reg_datum: foretag[16].encode(Encoding::UTF_8), Anstallda: foretag[35].encode(Encoding::UTF_8), Omsattning: foretag[43].encode(Encoding::UTF_8), RRes: foretag[55].encode(Encoding::UTF_8), ARes: foretag[76].encode(Encoding::UTF_8)) 
+        end
       end
     end
   end
