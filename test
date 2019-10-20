@@ -1,0 +1,3 @@
+string = "6776"
+puts string[0..3].sub!(/^0+/, "")
+# ==> 'empty string'

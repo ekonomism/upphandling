@@ -113,13 +113,13 @@ def skapa_databas
   puts "Klar avdelning"
   CSV.foreach("kommuner.csv") do |kommun|
     kommun = rensa(kommun)
-    puts kommun[0][0..3].sub!(/^0+/, "")
-    poster.where(Kommun: kommun[0][0..3].sub!(/^0+/, ""), Typ: "Kommun").update(HOms: -kommun[2].to_i)
+    puts kommun[0][0..3], kommun[0][0..3].sub(/^0+/, "")
+    poster.where(Kommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(HOms: -kommun[2].to_i)
   end  
   CSV.foreach("landsting.csv") do |landsting|
     landsting = rensa(landsting)
-    puts landsting[0], landsting[0][0..1].sub!(/^0+/, "")
-    poster.where(Lan: landsting[0][0..1].sub!(/^0+/, ""), Typ: "Landsting").update(HOms: -landsting[2].to_i)
+    puts landsting[0][0..1], landsting[0][0..1].sub(/^0+/, "")
+    poster.where(Lan: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(HOms: -landsting[2].to_i)
   end  
   puts "Klar kommuner"
 end
