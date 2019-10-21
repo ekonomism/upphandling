@@ -26,15 +26,16 @@ def initiera_databas
     Integer :SNI
     String :SNI_A
     String :SNI_namn
-    Integer :Lan
-    Integer :Kommun
+    Integer :Lan # leverantörens länsnr
+    Integer :Kommun # leverantörens kommunnr
     Integer :Stlk_klass
     Date :Reg_datum
     Integer :Anstallda
     Integer :Omsattning
     Integer :RRes
     Integer :ARes
-    Integer :HOms
+    Integer :KOms
+    Integer :KKommun # köparens läns/kommunnummer
   end
 end
 
@@ -52,10 +53,17 @@ class Inkopare
     @orgnr = orgnr
   end
   
-  private
-  
   def inkopsandel(sni) # Andel inköp av kommunens totala omsättning
-    
+    poster = DB[:relationer]
+    if sni == "alla" then
+      summa_inkop = poster.where(Kop: @orgnr).sum(:Summa)
+      omsattning = poster.where(Kop: @orgnr).avg(:KOms)*1000000
+    else
+      summa_inkop = poster.where(SNI_A: sni, Kop: @orgnr).sum(:Summa)
+      omsattning = poster.where(Kop: @orgnr).avg(:KOms)*1000000
+    end
+    puts summa_inkop, omsattning
+    return 100*summa_inkop/omsattning
   end  
   
   def snittstorlek(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
@@ -113,18 +121,24 @@ def skapa_databas
   puts "Klar avdelning"
   CSV.foreach("kommuner.csv") do |kommun|
     kommun = rensa(kommun)
-    puts kommun[0][0..3], kommun[0][0..3].sub(/^0+/, "")
-    poster.where(Kommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(HOms: -kommun[2].to_i)
+    poster.where(Kommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(KOms: -kommun[2].to_i)
   end  
   CSV.foreach("landsting.csv") do |landsting|
     landsting = rensa(landsting)
-    puts landsting[0][0..1], landsting[0][0..1].sub(/^0+/, "")
-    poster.where(Lan: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(HOms: -landsting[2].to_i)
+    poster.where(Lan: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(KOms: -landsting[2].to_i)
   end  
   puts "Klar kommuner"
+  CSV.foreach("kommunkodorgnr.csv", :encoding => 'iso-8859-1', :col_sep => ";") do |rad|
+    rad = rensa(rad)
+    puts rad.inspect
+    poster.where(Kop: rad[2]).update(KKommun: rad[0].sub(/^0+/, ""))
+  end
+  puts "Klar kommunkoder => orgnr"
 end
 
 
 
-skapa_databas
+#skapa_databas
+kommunen = Inkopare.new("2321000016")
+kommunen.inkopsandel("alla")
 
