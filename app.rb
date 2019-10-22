@@ -1,6 +1,7 @@
 #  ruby app.rb -o $IP -p $PORT 
  
 require 'rubygems'
+require 'sinatra'
 require 'nokogiri'   
 require 'open-uri'
 require 'sqlite3'
@@ -101,6 +102,8 @@ def skapa_databas
           poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0], AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
         end
       end
+    else
+      puts "Ingen fil för SNI:", sni
     end
   end
   udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
@@ -114,6 +117,8 @@ def skapa_databas
           poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0], AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
         end
       end
+    else
+      puts "Ingen fil för SNI:", sni
     end
   end
   puts "Klar relationer"
@@ -152,7 +157,7 @@ end
 
 
 
-#skapa_databas
+skapa_databas
 kommunen = Inkopare.new("2321000016")
 kommunen.inkopsandel("alla")
 
