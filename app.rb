@@ -91,14 +91,27 @@ end
 def skapa_databas
   initiera_databas
   poster = DB[:relationer]
-  (1..1).each do |sni|
+  (1..100).each do |sni|
     puts sni
     filnamn = "SNI" + sni.to_s + ".csv"
     if File.file?(filnamn) then
       CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
         relation = rensa(relation)
         if relation[9].is_integer? then
-          poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9], AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
+          poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0], AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
+        end
+      end
+    end
+  end
+  udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
+  udda_sni.each do |sni|
+    puts sni
+    filnamn = "SNI" + sni.to_s + ".csv"
+    if File.file?(filnamn) then
+      CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
+        relation = rensa(relation)
+        if relation[9].is_integer? then
+          poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0], AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
         end
       end
     end
@@ -110,7 +123,8 @@ def skapa_databas
     nummer += 1
     puts nummer if nummer % 10000 == 0
     poster.where(Lev: foretag[0]).update(Lan: foretag[6], Kommun: foretag[7], Stlk_klass: foretag[10], Reg_datum: foretag[16], Anstallda: foretag[35], Omsattning: foretag[43], RRes: foretag[55], ARes: foretag[76])
-  end    
+  end   
+
   puts "Klar företag"
   $kodnyckel.each do |key, value|
     nedre = value.first * 1000 - 1
