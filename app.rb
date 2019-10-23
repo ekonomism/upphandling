@@ -170,4 +170,8 @@ end
 skriv_till_csv
 kommunen = Inkopare.new("2321000016")
 kommunen.inkopsandel("alla")
+  
+get '/' do
+      'Put this in your pipe & smoke it!'
+end
 
