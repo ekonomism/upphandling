@@ -1,3 +1,4 @@
 # Gitignore
 *.db
 *.csv
+*.zip
