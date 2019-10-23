@@ -17,6 +17,7 @@ DB = Sequel.connect('sqlite://foretag.db')
 def initiera_databas
   # Skapar table och skriver över om den existerar
   DB.create_table! :relationer do
+    primary_key :Id
     String :Lev, null: false
     String :Lev_namn
     String :Kop
@@ -37,6 +38,7 @@ def initiera_databas
     Integer :ARes
     Integer :KOms
     Integer :KKommun # köparens läns/kommunnummer
+    Integer :SummaOmsattning # Summa gånger omsättning
   end
 end
 
@@ -57,18 +59,25 @@ class Inkopare
   def inkopsandel(sni) # Andel inköp av kommunens totala omsättning
     poster = DB[:relationer]
     if sni == "alla" then
-      summa_inkop = poster.where(Kop: @orgnr).sum(:Summa)
-      omsattning = poster.where(Kop: @orgnr).avg(:KOms)*1000000
+      summa_inkop = poster.where(Kop: @orgnr).exclude(Summa: nil).sum(:Summa)
+      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)*1000000
     else
-      summa_inkop = poster.where(SNI_A: sni, Kop: @orgnr).sum(:Summa)
-      omsattning = poster.where(Kop: @orgnr).avg(:KOms)*1000000
+      summa_inkop = poster.where(SNI_A: sni, Kop: @orgnr).exclude(Summa: nil).sum(:Summa)
+      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)*1000000
     end
     puts summa_inkop, omsattning
     return 100*summa_inkop/omsattning
   end  
-  
   def snittstorlek(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
-    
+    if sni == "alla" then
+      summa_omsattning = poster.where(Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
+      omsattning = poster.where(Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Omsattning)
+    else
+      summa_omsattning = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
+      omsattning = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Omsattning)
+    end
+    puts summa_omsattning, omsattning
+    return summa_omsattning/omsattning
   end
   
   def lokalandel(sni) # Andel som kommuner köper av lokala leverantörer
@@ -130,7 +139,6 @@ def skapa_databas
     puts nummer if nummer % 10000 == 0
     poster.where(Lev: foretag[0]).update(Lan: foretag[6], Kommun: foretag[7], Stlk_klass: foretag[10], Reg_datum: foretag[16], Anstallda: foretag[35], Omsattning: foretag[43], RRes: foretag[55], ARes: foretag[76])
   end   
-
   puts "Klar företag"
   $kodnyckel.each do |key, value|
     nedre = value.first * 1000 - 1
@@ -139,22 +147,27 @@ def skapa_databas
     poster.where(SNI: nedre..ovre).update(SNI_A: key)
   end  
   puts "Klar avdelning"
-  CSV.foreach("kommuner.csv") do |kommun|
-    kommun = rensa(kommun)
-    poster.where(Kommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(KOms: -kommun[2].to_i)
-  end  
-  CSV.foreach("landsting.csv") do |landsting|
-    landsting = rensa(landsting)
-    poster.where(Lan: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(KOms: -landsting[2].to_i)
-  end  
-  puts "Klar kommuner"
   CSV.foreach("kommunkodorgnr.csv", :encoding => 'iso-8859-1', :col_sep => ";") do |rad|
     rad = rensa(rad)
     puts rad.inspect
     poster.where(Kop: rad[2]).update(KKommun: rad[0].sub(/^0+/, ""))
   end
   puts "Klar kommunkoder => orgnr"
-
+  CSV.foreach("kommuner.csv") do |kommun|
+    kommun = rensa(kommun)
+    poster.where(KKommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(KOms: -kommun[2].to_i)
+  end  
+  CSV.foreach("landsting.csv") do |landsting|
+    landsting = rensa(landsting)
+    poster.where(KKommun: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(KOms: -landsting[2].to_i)
+  end  
+  puts "Klar kommuner"
+  # Skapa variabel summa gånger omssättning
+  poster.each do |post|
+    summa_omsattning = post[:Summa]*post[:Omsattning] if (!post[:Summa].nil? && !post[:Omsattning].nil?)
+    poster.where(Id: post[:Id]).update(SummaOmsattning: summa_omsattning)
+  end  
+  puts "Klar summa gånger omsättning"
 end
   
 def skriv_till_csv
@@ -168,7 +181,7 @@ def skriv_till_csv
 end
 
 
-#skapa_databas
+skapa_databas
 skriv_till_csv
 kommunen = Inkopare.new("2321000016")
 kommunen.inkopsandel("alla")
