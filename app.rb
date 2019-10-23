@@ -94,7 +94,7 @@ def skapa_databas
   poster = DB[:relationer]
   (1..100).each do |sni|
     puts sni
-    filnamn = "SNI" + sni.to_s + ".csv"
+    filnamn = "sni/SNI" + sni.to_s + ".csv"
     if File.file?(filnamn) then
       CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
         relation = rensa(relation)
@@ -109,7 +109,7 @@ def skapa_databas
   udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
   udda_sni.each do |sni|
     puts sni
-    filnamn = "SNI" + sni.to_s + ".csv"
+    filnamn = "sni/SNI" + sni.to_s + ".csv"
     if File.file?(filnamn) then
       CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
         relation = rensa(relation)
@@ -153,11 +153,21 @@ def skapa_databas
     poster.where(Kop: rad[2]).update(KKommun: rad[0].sub(/^0+/, ""))
   end
   puts "Klar kommunkoder => orgnr"
+
+end
+  
+def skriv_till_csv
+  poster = DB[:relationer]
+  CSV.open("upphandlingsdata.csv", "wb") do |csv|
+    poster.each do |row|
+      csv << row.values
+    end
+  end
 end
 
 
-
-skapa_databas
+#skapa_databas
+skriv_till_csv
 kommunen = Inkopare.new("2321000016")
 kommunen.inkopsandel("alla")
 
