@@ -39,6 +39,7 @@ def initiera_databas
     Integer :KOms
     Integer :KKommun # köparens läns/kommunnummer
     Integer :SummaOmsattning # Summa gånger omsättning
+    Integer :SummaAnstallda # Summa gånger anställda
   end
 end
 
@@ -50,38 +51,62 @@ class String
 end
 
 class Inkopare
-  attr_reader :inkopsandel, :snittstorlek, :lokalandel, :privatandel
   
   def initialize(orgnr)
+    poster = DB[:relationer]
     @orgnr = orgnr
+    @kommun = poster.select(:Kommun).where(Kop: orgnr).first
+    puts @kommun
   end
   
   def inkopsandel(sni) # Andel inköp av kommunens totala omsättning
     poster = DB[:relationer]
     if sni == "alla" then
       summa_inkop = poster.where(Kop: @orgnr).exclude(Summa: nil).sum(:Summa)
-      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)*1000000
+      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)
     else
       summa_inkop = poster.where(SNI_A: sni, Kop: @orgnr).exclude(Summa: nil).sum(:Summa)
-      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)*1000000
+      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)
     end
     puts summa_inkop, omsattning
-    return 100*summa_inkop/omsattning
+    @inkopsandel = summa_inkop/omsattning
   end  
+    
   def snittstorlek(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
+    poster = DB[:relationer]
     if sni == "alla" then
       summa_omsattning = poster.where(Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
-      omsattning = poster.where(Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Omsattning)
+      summa = poster.where(Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Summa)
     else
       summa_omsattning = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
-      omsattning = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Omsattning)
+      summa = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Summa)
     end
-    puts summa_omsattning, omsattning
-    return summa_omsattning/omsattning
+    puts summa_omsattning, summa
+    @snittstorlek = summa_omsattning/summa
+  end
+    
+  def snittanstallda(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
+    poster = DB[:relationer]
+    if sni == "alla" then
+      summa_anstallda = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      summa = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Summa)
+    else
+      summa_anstallda = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      summa = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Summa)
+    end
+    puts summa_anstallda, summa
+    @snittanstallda = summa_anstallda/summa.to_f
   end
   
   def lokalandel(sni) # Andel som kommuner köper av lokala leverantörer
-    
+    poster = DB[:relationer]
+    if sni == "alla" then
+      summa_anstallda = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      anstallda = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Anstallda)
+    else
+      summa_anstallda = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      anstallda = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Anstallda)
+    end
   end  
   
   def privatandel(sni) # Andel privat försäljning bland leverantörer
@@ -108,7 +133,7 @@ def skapa_databas
       CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
         relation = rensa(relation)
         if relation[9].is_integer? then
-          poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0], AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
+          poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].to_i, AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
         end
       end
     else
@@ -124,7 +149,7 @@ def skapa_databas
       CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
         relation = rensa(relation)
         if relation[9].is_integer? then
-          poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0], AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
+          poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].to_i, AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
         end
       end
     else
@@ -137,7 +162,7 @@ def skapa_databas
     foretag = rensa(foretag)
     nummer += 1
     puts nummer if nummer % 10000 == 0
-    poster.where(Lev: foretag[0]).update(Lan: foretag[6], Kommun: foretag[7], Stlk_klass: foretag[10], Reg_datum: foretag[16], Anstallda: foretag[35], Omsattning: foretag[43], RRes: foretag[55], ARes: foretag[76])
+    poster.where(Lev: foretag[0]).update(Lan: foretag[6], Kommun: foretag[7], Stlk_klass: foretag[10], Reg_datum: foretag[16], Anstallda: foretag[35], Omsattning: foretag[43].to_i*1000, RRes: foretag[55], ARes: foretag[76])
   end   
   puts "Klar företag"
   $kodnyckel.each do |key, value|
@@ -155,19 +180,28 @@ def skapa_databas
   puts "Klar kommunkoder => orgnr"
   CSV.foreach("kommuner.csv") do |kommun|
     kommun = rensa(kommun)
-    poster.where(KKommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(KOms: -kommun[2].to_i)
+    poster.where(KKommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(KOms: -kommun[2].to_i*1000)
   end  
   CSV.foreach("landsting.csv") do |landsting|
     landsting = rensa(landsting)
-    poster.where(KKommun: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(KOms: -landsting[2].to_i)
+    poster.where(KKommun: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(KOms: -landsting[2].to_i*1000000)
   end  
   puts "Klar kommuner"
-  # Skapa variabel summa gånger omssättning
+  # Skapa variabel summa gånger omsättning
   poster.each do |post|
-    summa_omsattning = post[:Summa]*post[:Omsattning] if (!post[:Summa].nil? && !post[:Omsattning].nil?)
-    poster.where(Id: post[:Id]).update(SummaOmsattning: summa_omsattning)
+    if !post[:Summa].nil? && !post[:Omsattning].nil? then
+      summa_omsattning = post[:Summa]*post[:Omsattning] 
+      poster.where(Id: post[:Id]).update(SummaOmsattning: summa_omsattning)
+    end
   end  
   puts "Klar summa gånger omsättning"
+  poster.each do |post|
+    if !post[:Summa].nil? && !post[:Anstallda].nil? then
+      summa_anstallda = post[:Summa]*post[:Anstallda] 
+      poster.where(Id: post[:Id]).update(SummaAnstallda: summa_anstallda)
+    end
+  end  
+  puts "Klar summa gånger anställda"
 end
   
 def skriv_till_csv
@@ -184,7 +218,9 @@ end
 skapa_databas
 skriv_till_csv
 kommunen = Inkopare.new("2321000016")
-kommunen.inkopsandel("alla")
+puts kommunen.inkopsandel("alla")
+puts kommunen.snittstorlek("alla")
+puts kommunen.snittanstallda("alla")
   
 get '/' do
   erb :index
