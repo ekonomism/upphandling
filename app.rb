@@ -10,8 +10,17 @@ require 'json'
 require 'erb' 
 require 'csv'
 require 'sequel'
+require 'securerandom'
+
+enable :sessions
+set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
 
 $kodnyckel = {'A' => 1..3, 'B' => 5..9, 'C' => 10..33, 'D' => 35..35, 'E' => 36..39, 'F' => 41..43, 'G' => 45..47, 'H' => 49..53, 'I' => 55..56, 'J' => 58..63, 'K' => 64..66, 'L' => 68..68, 'M' => 69..75, 'N' => 77..82, 'O' => 84..84, 'P' => 85..85, 'Q' => 86..88, 'R' => 90..93, 'S' => 94..96, 'T' => 97..98, 'U' => 99..99 }
+$branscher = {'A' => 'Jordbruk, skogsbruk och fiske', 'B' => 'Utvinning av mineral', 'C' => 'Tillverkning', 'D' => 'Försörjning av el, gas, värme och kyla', 'E' => 'Vattenförsörjning; avloppsrening, avfallshantering och sanering', 
+  'F' => 'Byggverksamhet', 'G' => 'Handel; reparation av motorfordon och motorcyklar', 'H' => 'Transport och magasinering', 'I' => 'Hotell- och restaurangverksamhet', 'J' => 'Informations- och kommunikationsverksamhet', 
+  'K' => 'Finans- och försäkringsverksamhet', 'L' => 'Fastighetsverksamhet', 'M' => 'Verksamhet inom juridik, ekonomi, vetenskap och teknik', 'N' => 'Uthyrning, fastighetsservice, resetjänster och andra stödtjänster', 
+  'O' => 'Offentlig förvaltning och försvar; obligatorisk socialförsäkring', 'P' => 'Utbildning', 'Q' => 'Vård och omsorg; sociala tjänster', 'R' => 'Kultur, nöje och fritid', 'S' => 'Annan serviceverksamhet', 
+  'T' => 'Förvärvsarbete i hushåll; hushållens produktion av diverse varor och tjänster för eget bruk', 'U' => 'Verksamhet vid internationella organisationer, utländska ambassader o.d.' }
 
 DB = Sequel.connect('sqlite://foretag.db')
 def initiera_databas
@@ -40,6 +49,7 @@ def initiera_databas
     Integer :KKommun # köparens läns/kommunnummer
     Integer :SummaOmsattning # Summa gånger omsättning
     Integer :SummaAnstallda # Summa gånger anställda
+    Boolean :LokalFlagga # Flagga som är true om lokal
   end
 end
 
@@ -105,18 +115,26 @@ class Inkopare
   
   def lokalandel(sni) # Andel som kommuner köper av lokala leverantörer
     poster = DB[:relationer]
-
     if sni == "alla" then
-      summa_anstallda = poster.where(Kop: @lev).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      anstallda = poster.where(Kop: @lev).exclude(SummaAnstallda: nil).sum(:Anstallda)
+      summa_inkop_lokal = poster.where(Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
+      summa_inkop_ejlokal = poster.where(Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
     else
-      summa_anstallda = poster.where(SNI_A: sni, Kop: @lev).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      anstallda = poster.where(SNI_A: sni, Kop: @lev).exclude(SummaAnstallda: nil).sum(:Anstallda)
+      summa_inkop_lokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
+      summa_inkop_ejlokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
     end
+    puts summa_inkop_lokal, summa_inkop_ejlokal
+    @lokalandel = summa_inkop_lokal.to_f/(summa_inkop_lokal + summa_inkop_ejlokal)
   end  
   
   def privatandel(sni) # Andel privat försäljning bland leverantörer
-    
+    poster = DB[:relationer]
+    if sni == "alla" then
+      summa_inkop_lokal = poster.where(Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
+      summa_inkop_ejlokal = poster.where(Kop: @lev, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
+    else
+      summa_inkop_lokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
+      summa_inkop_ejlokal = poster.where(SNI_A: sni, Kop: @lev, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
+    end
   end
   
 end  
@@ -208,6 +226,16 @@ def skapa_databas
     end
   end  
   puts "Klar summa gånger anställda"
+  poster.each do |post|
+    if !post[:Lan].nil? && !post[:Kommun].nil? then
+      if ((post[:Kommun] == post[:KKommun]) && (post[:Typ] == "Kommun")) || ((post[:Lan] == post[:KKommun]) && (post[:Typ] == "Landsting")) then
+        poster.where(Id: post[:Id]).update(LokalFlagga: true)
+      else
+        poster.where(Id: post[:Id]).update(LokalFlagga: false)
+      end  
+    end  
+  end  
+  puts "Klar flagga lokal"
 end
   
 def skriv_till_csv
@@ -220,19 +248,28 @@ def skriv_till_csv
   end
 end
 
-
 #skapa_databas
 #skriv_till_csv
 kommunen = Inkopare.new("2321000016")
 puts kommunen.inkopsandel("alla")
 puts kommunen.snittstorlek("alla")
 puts kommunen.snittanstallda("alla")
+puts kommunen.lokalandel("alla")
 
-get '/tabell' do
+get '/tabell?' do
+  session[:kopare] = params['kopare'] if !params['kopare'].nil?
+  session[:sni] = params['sni'] if !params['sni'].nil?
+  session[:sortera] = params['sortera'] if !params['sortera'].nil?
   erb :tabell
+end
+  
+get '/rubrik?' do
+  erb :rubrik
 end
   
 get '/' do
   erb :index
 end
+
+
 
