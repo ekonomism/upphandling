@@ -51,22 +51,27 @@ class String
 end
 
 class Inkopare
+  attr_reader :kop, :kommun, :lan
   
-  def initialize(orgnr)
+  def initialize(kop)
     poster = DB[:relationer]
-    @orgnr = orgnr
-    @kommun = poster.select(:Kommun).where(Kop: orgnr).first
-    puts @kommun
+    @kop = kop
+    @typ = poster.select(:Typ).where(Kop: kop).first[:Typ]
+    puts "Typ", @typ
+    @kommun = poster.select(:Kommun).where(Kop: kop).exclude(Kommun: nil).first[:Kommun]
+    puts "Kommun", @kommun
+    @lan = poster.select(:Lan).where(Kop: kop).exclude(Lan: nil).first[:Lan]
+    puts "Lan", @lan
   end
   
   def inkopsandel(sni) # Andel inköp av kommunens totala omsättning
     poster = DB[:relationer]
     if sni == "alla" then
-      summa_inkop = poster.where(Kop: @orgnr).exclude(Summa: nil).sum(:Summa)
-      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)
+      summa_inkop = poster.where(Kop: @kop).exclude(Summa: nil).sum(:Summa)
+      omsattning = poster.where(Kop: @kop).exclude(KOms: nil).avg(:KOms)
     else
-      summa_inkop = poster.where(SNI_A: sni, Kop: @orgnr).exclude(Summa: nil).sum(:Summa)
-      omsattning = poster.where(Kop: @orgnr).exclude(KOms: nil).avg(:KOms)
+      summa_inkop = poster.where(SNI_A: sni, Kop: @kop).exclude(Summa: nil).sum(:Summa)
+      omsattning = poster.where(Kop: @kop).exclude(KOms: nil).avg(:KOms)
     end
     puts summa_inkop, omsattning
     @inkopsandel = summa_inkop/omsattning
@@ -75,11 +80,11 @@ class Inkopare
   def snittstorlek(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
     poster = DB[:relationer]
     if sni == "alla" then
-      summa_omsattning = poster.where(Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
-      summa = poster.where(Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Summa)
+      summa_omsattning = poster.where(Kop: @kop).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
+      summa = poster.where(Kop: @kop).exclude(SummaOmsattning: nil).sum(:Summa)
     else
-      summa_omsattning = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
-      summa = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaOmsattning: nil).sum(:Summa)
+      summa_omsattning = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
+      summa = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaOmsattning: nil).sum(:Summa)
     end
     puts summa_omsattning, summa
     @snittstorlek = summa_omsattning/summa
@@ -88,11 +93,11 @@ class Inkopare
   def snittanstallda(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
     poster = DB[:relationer]
     if sni == "alla" then
-      summa_anstallda = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      summa = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Summa)
+      summa_anstallda = poster.where(Kop: @kop).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      summa = poster.where(Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
     else
-      summa_anstallda = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      summa = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Summa)
+      summa_anstallda = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      summa = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
     end
     puts summa_anstallda, summa
     @snittanstallda = summa_anstallda/summa.to_f
@@ -100,12 +105,13 @@ class Inkopare
   
   def lokalandel(sni) # Andel som kommuner köper av lokala leverantörer
     poster = DB[:relationer]
+
     if sni == "alla" then
-      summa_anstallda = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      anstallda = poster.where(Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Anstallda)
+      summa_anstallda = poster.where(Kop: @lev).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      anstallda = poster.where(Kop: @lev).exclude(SummaAnstallda: nil).sum(:Anstallda)
     else
-      summa_anstallda = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      anstallda = poster.where(SNI_A: sni, Kop: @orgnr).exclude(SummaAnstallda: nil).sum(:Anstallda)
+      summa_anstallda = poster.where(SNI_A: sni, Kop: @lev).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+      anstallda = poster.where(SNI_A: sni, Kop: @lev).exclude(SummaAnstallda: nil).sum(:Anstallda)
     end
   end  
   
@@ -215,12 +221,16 @@ def skriv_till_csv
 end
 
 
-skapa_databas
-skriv_till_csv
+#skapa_databas
+#skriv_till_csv
 kommunen = Inkopare.new("2321000016")
 puts kommunen.inkopsandel("alla")
 puts kommunen.snittstorlek("alla")
 puts kommunen.snittanstallda("alla")
+
+get '/tabell' do
+  erb :tabell
+end
   
 get '/' do
   erb :index
