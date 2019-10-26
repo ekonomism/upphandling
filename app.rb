@@ -42,7 +42,7 @@ def initiera_databas
     Integer :Stlk_klass
     Date :Reg_datum
     Integer :Anstallda
-    Integer :Omsattning
+    Integer :Omsattning # Leverantörers omsättning
     Integer :RRes
     Integer :ARes
     Integer :KOms
@@ -129,12 +129,14 @@ class Inkopare
   def privatandel(sni) # Andel privat försäljning bland leverantörer
     poster = DB[:relationer]
     if sni == "alla" then
-      summa_inkop_lokal = poster.where(Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
-      summa_inkop_ejlokal = poster.where(Kop: @lev, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
+      summa_inkop = poster.where(Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
+      summa_omsattning = poster.where(Kop: @kop).exclude(Omsattning: nil).sum(:Omsattning)
     else
-      summa_inkop_lokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
-      summa_inkop_ejlokal = poster.where(SNI_A: sni, Kop: @lev, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
+      summa_inkop = poster.where(SNI_A: sni, Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
+      summa_omsattning = poster.where(SNI_A: sni, Kop: @kop).exclude(Omsattning: nil).sum(:Omsattning)
     end
+    puts summa_inkop, summa_omsattning
+    @offandel = summa_inkop.to_f/summa_omsattning
   end
   
 end  
@@ -248,23 +250,24 @@ def skriv_till_csv
   end
 end
 
-#skapa_databas
-#skriv_till_csv
+skapa_databas
+skriv_till_csv
 kommunen = Inkopare.new("2321000016")
-puts kommunen.inkopsandel("alla")
-puts kommunen.snittstorlek("alla")
-puts kommunen.snittanstallda("alla")
-puts kommunen.lokalandel("alla")
+puts "Inköpsandel", kommunen.inkopsandel("alla")
+puts "Snittstorlek", kommunen.snittstorlek("alla")
+puts "Snittanstallda", kommunen.snittanstallda("alla")
+puts "Lokalandel", kommunen.lokalandel("alla")
+puts "Privatandel", kommunen.offandel("alla")
+
+def skapa_tabell
+  
+end  
 
 get '/tabell?' do
   session[:kopare] = params['kopare'] if !params['kopare'].nil?
   session[:sni] = params['sni'] if !params['sni'].nil?
   session[:sortera] = params['sortera'] if !params['sortera'].nil?
   erb :tabell
-end
-  
-get '/rubrik?' do
-  erb :rubrik
 end
   
 get '/' do
