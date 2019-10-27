@@ -11,6 +11,7 @@ require 'erb'
 require 'csv'
 require 'sequel'
 require 'securerandom'
+require 'set'
 
 enable :sessions
 set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
@@ -51,6 +52,18 @@ def initiera_databas
     Integer :SummaAnstallda # Summa gånger anställda
     Boolean :LokalFlagga # Flagga som är true om lokal
   end
+  DB.create_table! :tabell do
+    primary_key :Id
+    String :Kop
+    String :Kop_namn
+    String :Typ
+    String :SNI_A
+    Float :Inkopsandel
+    Float :Snittstorlek
+    Float :Snittanstallda
+    Float :Lokalandel
+    Float :Offandel
+  end
 end
 
 # Helper
@@ -64,81 +77,110 @@ class Inkopare
   attr_reader :kop, :kommun, :lan
   
   def initialize(kop)
-    poster = DB[:relationer]
-    @kop = kop
-    @typ = poster.select(:Typ).where(Kop: kop).first[:Typ]
-    puts "Typ", @typ
-    @kommun = poster.select(:Kommun).where(Kop: kop).exclude(Kommun: nil).first[:Kommun]
-    puts "Kommun", @kommun
-    @lan = poster.select(:Lan).where(Kop: kop).exclude(Lan: nil).first[:Lan]
-    puts "Lan", @lan
+    begin
+      poster = DB[:relationer]
+      @kop = kop
+      @typ = poster.select(:Typ).where(Kop: kop).first[:Typ]
+      @kommun = poster.select(:Kommun).where(Kop: kop).exclude(Kommun: nil).first[:Kommun]
+      @lan = poster.select(:Lan).where(Kop: kop).exclude(Lan: nil).first[:Lan]
+    rescue StandardError => e
+      @kop = nil
+      @typ = nil
+      @kommun = nil
+      @lan = nil
+    end  
   end
   
   def inkopsandel(sni) # Andel inköp av kommunens totala omsättning
     poster = DB[:relationer]
-    if sni == "alla" then
-      summa_inkop = poster.where(Kop: @kop).exclude(Summa: nil).sum(:Summa)
-      omsattning = poster.where(Kop: @kop).exclude(KOms: nil).avg(:KOms)
-    else
-      summa_inkop = poster.where(SNI_A: sni, Kop: @kop).exclude(Summa: nil).sum(:Summa)
-      omsattning = poster.where(Kop: @kop).exclude(KOms: nil).avg(:KOms)
-    end
-    puts summa_inkop, omsattning
-    @inkopsandel = summa_inkop/omsattning
+    begin
+      if sni == "alla" then
+        summa_inkop = poster.where(Kop: @kop).exclude(Summa: nil).sum(:Summa)
+        omsattning = poster.where(Kop: @kop).exclude(KOms: nil).avg(:KOms)
+      else
+        summa_inkop = poster.where(SNI_A: sni, Kop: @kop).exclude(Summa: nil).sum(:Summa)
+        omsattning = poster.where(Kop: @kop).exclude(KOms: nil).avg(:KOms)
+      end
+      inkopsandel = summa_inkop/omsattning
+      inkopsandel = nil if inkopsandel.nan?
+    rescue StandardError => e
+      inkopsandel = nil  
+    end   
+    return inkopsandel
   end  
     
   def snittstorlek(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
     poster = DB[:relationer]
-    if sni == "alla" then
-      summa_omsattning = poster.where(Kop: @kop).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
-      summa = poster.where(Kop: @kop).exclude(SummaOmsattning: nil).sum(:Summa)
-    else
-      summa_omsattning = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
-      summa = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaOmsattning: nil).sum(:Summa)
+    begin
+      if sni == "alla" then
+        summa_omsattning = poster.where(Kop: @kop).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
+        summa = poster.where(Kop: @kop).exclude(SummaOmsattning: nil).sum(:Summa)
+      else
+        summa_omsattning = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaOmsattning: nil).sum(:SummaOmsattning)
+        summa = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaOmsattning: nil).sum(:Summa)
+      end
+      snittstorlek = summa_omsattning/summa
+      snittstorlek = nil if snittstorlek.nan?
+    rescue StandardError => e
+      snittstorlek = nil
     end
-    puts summa_omsattning, summa
-    @snittstorlek = summa_omsattning/summa
+    return snittstorlek
   end
     
   def snittanstallda(sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
     poster = DB[:relationer]
-    if sni == "alla" then
-      summa_anstallda = poster.where(Kop: @kop).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      summa = poster.where(Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
-    else
-      summa_anstallda = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
-      summa = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
+    begin
+      if sni == "alla" then
+        summa_anstallda = poster.where(Kop: @kop).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+        summa = poster.where(Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
+      else
+        summa_anstallda = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
+        summa = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
+      end
+      snittanstallda = summa_anstallda.to_f/summa
+      snittanstallda = nil if snittanstallda.nan?
+    rescue StandardError => e
+      snittanstallda  = nil
     end
-    puts summa_anstallda, summa
-    @snittanstallda = summa_anstallda/summa.to_f
+    return snittanstallda
   end
   
   def lokalandel(sni) # Andel som kommuner köper av lokala leverantörer
     poster = DB[:relationer]
-    if sni == "alla" then
-      summa_inkop_lokal = poster.where(Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
-      summa_inkop_ejlokal = poster.where(Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
-    else
-      summa_inkop_lokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
-      summa_inkop_ejlokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
-    end
-    puts summa_inkop_lokal, summa_inkop_ejlokal
-    @lokalandel = summa_inkop_lokal.to_f/(summa_inkop_lokal + summa_inkop_ejlokal)
+    begin
+      if sni == "alla" then
+        summa_inkop_lokal = poster.where(Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
+        summa_inkop_ejlokal = poster.where(Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
+      else
+        summa_inkop_lokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: true).exclude(LokalFlagga: nil).sum(:Summa)
+        summa_inkop_ejlokal = poster.where(SNI_A: sni, Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
+      end
+      lokalandel = summa_inkop_lokal.to_f/(summa_inkop_lokal + summa_inkop_ejlokal)
+      lokalandel = nil if lokalandel.nan?
+    rescue StandardError => e
+      lokalandel = nil
+    end 
+    return lokalandel
   end  
   
-  def privatandel(sni) # Andel privat försäljning bland leverantörer
+  def offandel(sni) # Andel privat försäljning bland leverantörer
     poster = DB[:relationer]
-    if sni == "alla" then
-      summa_inkop = poster.where(Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
-      summa_omsattning = poster.where(Kop: @kop).exclude(Omsattning: nil).sum(:Omsattning)
-    else
-      summa_inkop = poster.where(SNI_A: sni, Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
-      summa_omsattning = poster.where(SNI_A: sni, Kop: @kop).exclude(Omsattning: nil).sum(:Omsattning)
+    begin
+      if sni == "alla" then
+        summa_inkop = poster.where(Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
+        summa_omsattning = poster.where(Kop: @kop).exclude(Omsattning: nil).sum(:Omsattning)
+      else
+        summa_inkop = poster.where(SNI_A: sni, Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
+        summa_omsattning = poster.where(SNI_A: sni, Kop: @kop).exclude(Omsattning: nil).sum(:Omsattning)
+      end
+      offandel = summa_inkop.to_f/summa_omsattning
+      offandel = nil if offandel.nan?
+    rescue StandardError => e
+      offandel = nil
     end
-    puts summa_inkop, summa_omsattning
-    @offandel = summa_inkop.to_f/summa_omsattning
+    return offandel
   end
-  
+    
 end  
 
 def rensa(lista)
@@ -250,18 +292,32 @@ def skriv_till_csv
   end
 end
 
+def skapa_tabell
+  poster = DB[:relationer]
+  kopare = Set[]
+  poster.each do |post|
+    kopare << [post[:Kop], post[:Kop_namn], post[:Typ]]
+  end
+  puts "Klar set"
+  tabell = DB[:tabell]
+  # Data för samtliga branscher
+  kopare.each do |koparen|
+    item = Inkopare.new(koparen[0])
+    tabell.insert(Kop: koparen[0], Kop_namn: koparen[1], Typ: koparen[2], SNI_A: "alla", Inkopsandel: item.inkopsandel("alla"), Snittstorlek: item.snittstorlek("alla"), Snittanstallda: item.snittanstallda("alla"), Lokalandel: item.lokalandel("alla"), Offandel: item.offandel("alla"))
+  end  
+  # Data för varje SNI-avdelning
+  ("A".."U").each do |sni|
+    kopare.each do |koparen|
+      item = Inkopare.new(koparen[0])
+      tabell.insert(Kop: koparen[0], Kop_namn: koparen[1], Typ: koparen[2], SNI_A: sni, Inkopsandel: item.inkopsandel(sni), Snittstorlek: item.snittstorlek(sni), Snittanstallda: item.snittanstallda(sni), Lokalandel: item.lokalandel(sni), Offandel: item.offandel(sni))  
+    end
+  end  
+end  
+
 skapa_databas
 skriv_till_csv
-kommunen = Inkopare.new("2321000016")
-puts "Inköpsandel", kommunen.inkopsandel("alla")
-puts "Snittstorlek", kommunen.snittstorlek("alla")
-puts "Snittanstallda", kommunen.snittanstallda("alla")
-puts "Lokalandel", kommunen.lokalandel("alla")
-puts "Privatandel", kommunen.offandel("alla")
-
-def skapa_tabell
-  
-end  
+skapa_tabell
+    
 
 get '/tabell?' do
   session[:kopare] = params['kopare'] if !params['kopare'].nil?
