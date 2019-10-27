@@ -194,7 +194,7 @@ end
 def skapa_databas
   initiera_databas
   poster = DB[:relationer]
-  (1..1).each do |sni|
+  (1..100).each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
     if File.file?(filnamn) then
@@ -208,8 +208,7 @@ def skapa_databas
       puts "Ingen fil för SNI:", sni
     end
   end
-  #udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
-  udda_sni = []
+  udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
   udda_sni.each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
