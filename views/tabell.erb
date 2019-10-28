@@ -1,23 +1,25 @@
-<table id="tabell" class="table table-striped table-sm">
+<table id="tabell" class="table table-striped table-sm table-hover text-center">
           <thead>
             <tr>
-              <th>Upphandlare</th>
-              <th>Andel inköp</th>
-              <th>Snittstorlek</th>
-              <th>Snittanställda</th>
-              <th>Lokal andel</th>
-               <th>Privat andel</th>
+              <th><a class="nav-link <% if session[:sortera] == "kop_namn" %>table-active<% end %>" href="/tabell?sortera=kop_namn" up-target="#tabell" up-restore-scroll='true'>Upphandlare</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "inkopsandel" %>table-active<% end %>" href="/tabell?sortera=inkopsandel" up-target="#tabell" up-restore-scroll='true'>Inköpsandel</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "snittstorlek" %>table-active<% end %>" href="/tabell?sortera=snittstorlek" up-target="#tabell" up-restore-scroll='true'>Snittstorlek</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "snittanstallda" %>table-active<% end %>" href="/tabell?sortera=snittanstallda" up-target="#tabell" up-restore-scroll='true'>Snittanställda</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "lokalandel" %>table-active<% end %>" href="/tabell?sortera=lokalandel" up-target="#tabell" up-restore-scroll='true'>Lokal andel</a></th>
+               <th><a class="nav-link <% if session[:sortera] == "offandel" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true'>Offentlig andel</a></th>
             </tr>
           </thead>
           <tbody>
+            <% @tabell_h.each do |post| %>
             <tr>
-              <td>1,002</td>
-              <td>Lorem</td>
-              <td>ipsum</td>
-              <td>dolor</td>
-              <td>sit</td>
-              <td>sit</td>
+              <td><%= post[:Kop_namn] %></td>
+              <td><%= post[:Inkopsandel].to_s[0..3] %></td>
+              <td><%= post[:Snittstorlek].to_s.split(".")[0] %></td>
+              <td><%= post[:Snittanstallda].to_s[0..5] %></td>
+              <td><%= post[:Lokalandel].to_s[0..3] %></td>
+              <td><%= post[:Offandel].to_s[0..3] %></td>
             </tr>
+            <% end %>
           </tbody>
 </table>
 
