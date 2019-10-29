@@ -1,12 +1,12 @@
 <table id="tabell" class="table table-striped table-sm table-hover text-center">
           <thead>
             <tr>
-              <th><a class="nav-link <% if session[:sortera] == "kop_namn" %>table-active<% end %>" href="/tabell?sortera=kop_namn" up-target="#tabell" up-restore-scroll='true'>Upphandlare</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "inkopsandel" %>table-active<% end %>" href="/tabell?sortera=inkopsandel" up-target="#tabell" up-restore-scroll='true'>Inköpsandel</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "snittstorlek" %>table-active<% end %>" href="/tabell?sortera=snittstorlek" up-target="#tabell" up-restore-scroll='true'>Snittstorlek</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "snittanstallda" %>table-active<% end %>" href="/tabell?sortera=snittanstallda" up-target="#tabell" up-restore-scroll='true'>Snittanställda</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "lokalandel" %>table-active<% end %>" href="/tabell?sortera=lokalandel" up-target="#tabell" up-restore-scroll='true'>Lokal andel</a></th>
-               <th><a class="nav-link <% if session[:sortera] == "offandel" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true'>Offentlig andel</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "kop_namn" %>table-active<% end %>" href="/tabell?sortera=kop_namn" up-target="#tabell" up-restore-scroll='true'  up-cache="false">Upphandlare</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "inkopsandel" %>table-active<% end %>" href="/tabell?sortera=inkopsandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpsandel</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "snittstorlek" %>table-active<% end %>" href="/tabell?sortera=snittstorlek" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittstorlek</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "snittanstallda" %>table-active<% end %>" href="/tabell?sortera=snittanstallda" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittanställda</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "lokalandel" %>table-active<% end %>" href="/tabell?sortera=lokalandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Lokal andel</a></th>
+               <th><a class="nav-link <% if session[:sortera] == "offandel" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpares andel</a></th>
             </tr>
           </thead>
           <tbody>
@@ -25,19 +25,19 @@
 
 <ul id="meny" class="nav flex-column">     
           <li class="nav-item">
-            <a class="nav-link <% if session[:kopare] == "kommun" %>active<% end %>" href="/tabell?kopare=kommun" up-target="#tabell, #meny">
+            <a class="nav-link <% if session[:kopare] == "kommun" %>active<% end %>" href="/tabell?kopare=kommun" up-target="#tabell, #meny" up-cache="false">
               <img src="/icons/octagon.png" alt="icon name">
               Kommuner
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link <% if session[:kopare] == "lan" %>active<% end %>" href="/tabell?kopare=lan" up-target="#tabell, #meny">
+            <a class="nav-link <% if session[:kopare] == "lan" %>active<% end %>" href="/tabell?kopare=lan" up-target="#tabell, #meny"  up-cache="false">
               <img src="/icons/heart.png" alt="icon name">
               Landsting
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link <% if session[:kopare] == "myndighet" %>active<% end %>" href="/tabell?kopare=myndighet" up-target="#tabell, #meny">
+            <a class="nav-link <% if session[:kopare] == "myndighet" %>active<% end %>" href="/tabell?kopare=myndighet" up-target="#tabell, #meny"  up-cache="false">
               <img src="/icons/archive.png" alt="icon name">
               Myndigheter
             </a>
@@ -46,14 +46,14 @@
 
 <ul id="snimeny" class="nav flex-column mb-2">
           <li class="nav-item">
-            <a id="bransch_alla" class="nav-link <% if session[:sni] == 'alla' %>active<% end %>" href="/tabell?sni=alla" up-target="#tabell, #snimeny">
+            <a id="bransch_alla" class="nav-link <% if session[:sni] == 'alla' %>active<% end %>" href="/tabell?sni=alla" up-target="#tabell, #snimeny"  up-cache="false">
               <img src="/icons/target.png" alt="icon name">
               Samtliga branscher
             </a>
           </li>
          <% for i in "A".."U" do %>
           <li class="nav-item">
-            <a id="bransch_<%= i %>" class="nav-link <% if session[:sni] == i %>active<% end %>" href="/tabell?sni=<%= i %>" up-target="#tabell, #snimeny">
+            <a id="bransch_<%= i %>" class="nav-link <% if session[:sni] == i %>active<% end %>" href="/tabell?sni=<%= i %>" up-target="#tabell, #snimeny" up-cache="false">
               <img src="/icons/target.png" alt="icon name">
               <%= i %>: <%= $branscher[i] %>
             </a>

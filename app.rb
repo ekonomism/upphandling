@@ -136,7 +136,7 @@ class Inkopare
         summa_anstallda = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:SummaAnstallda)
         summa = poster.where(SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
       end
-      snittanstallda = 100*summa_anstallda.to_f/summa
+      snittanstallda = summa_anstallda.to_f/summa
       snittanstallda = nil if snittanstallda.nan?
     rescue StandardError => e
       snittanstallda  = nil
@@ -162,7 +162,7 @@ class Inkopare
     return lokalandel
   end  
   
-  def offandel(sni) # Andel privat försäljning bland leverantörer
+  def offandel(sni) # Andel av total försäljning som går till köparen
     poster = DB[:relationer]
     begin
       if sni == "alla" then
@@ -300,11 +300,11 @@ def skapa_tabell
   tabell = DB[:tabell]
   # Data för samtliga branscher
   kopare.each do |key, value|
-    
     item = Inkopare.new(key)
     tabell.insert(Kop: key, Kop_namn: value[0], Typ: value[1], SNI_A: "alla", Inkopsandel: item.inkopsandel("alla").to_s[1..3], Snittstorlek: item.snittstorlek("alla"), Snittanstallda: item.snittanstallda("alla"), Lokalandel: item.lokalandel("alla"), Offandel: item.offandel("alla"))
   end   
   ("A".."U").each do |sni|
+    puts "Avdelning: ", sni
     kopare.each do |key, value|
       item = Inkopare.new(key)
       tabell.insert(Kop: key, Kop_namn: value[0], Typ: value[1], SNI_A: sni, Inkopsandel: item.inkopsandel(sni), Snittstorlek: item.snittstorlek(sni), Snittanstallda: item.snittanstallda(sni), Lokalandel: item.lokalandel(sni), Offandel: item.offandel(sni))
@@ -312,9 +312,9 @@ def skapa_tabell
   end
 end  
     
-skapa_databas
-skriv_till_csv
-skapa_tabell
+#skapa_databas
+#skriv_till_csv
+#skapa_tabell
 
     
 get '/tabell?' do
