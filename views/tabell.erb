@@ -44,6 +44,17 @@
           </li>
 </ul>
 
+<ul id="ar" class="nav flex-column">   
+      <% $ar.each do |ar| %>
+          <li class="nav-item">
+            <a class="nav-link <% if session[:ar] == ar %>active<% end %>" href="/diagram?ar=<%= ar %>" up-target="#diagram, #ar" up-cache="false">
+              <img src="/icons/calendar.png" alt="icon name">
+              Kommuner
+            </a>
+          </li>
+       <% end %>
+</ul>
+
 <ul id="snimeny" class="nav flex-column mb-2">
           <li class="nav-item">
             <a id="bransch_alla" class="nav-link <% if session[:sni] == 'alla' %>active<% end %>" href="/tabell?sni=alla" up-target="#tabell, #snimeny"  up-cache="false">

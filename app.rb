@@ -168,7 +168,7 @@ class Inkopare
   
   def offandel(ar, sni) # Andel av total försäljning som går till köparen
     poster = DB[:relationer]
-    #begin
+    begin
       # Skapa array med unika värden med orgnr till varje säljare
       saljare = poster.select(:Lev).where(Ar: ar, Kop: kop).all.map{|x| x.values }.flatten.uniq
       # Summera omsättning över säljare
@@ -187,10 +187,10 @@ class Inkopare
       offandel = 100*summa_inkop.to_f/summa_omsattning
       offandel = nil if offandel.nan?
       puts summa_inkop, summa_omsattning
-    #rescue StandardError => e
+    rescue StandardError => e
       puts e
       offandel = nil
-    #end
+    end
     return offandel
   end
     
@@ -214,16 +214,20 @@ def skapa_databas
       CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
         relation = rensa(relation)
         $ar.each do |ar|
-          if relation[9].is_integer? && ar == 2014 then
-            poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[21].split(",")[0].to_i, AFakt: relation[22], SNI: relation[23], SNI_namn: relation[24])
-          elsif relation[9].is_integer? && ar == 2015 then
-            poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[17].split(",")[0].to_i, AFakt: relation[18], SNI: relation[19], SNI_namn: relation[20])
-          elsif relation[9].is_integer? && ar == 2016 then
-            poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[13].split(",")[0].to_i, AFakt: relation[14], SNI: relation[15], SNI_namn: relation[16])
-          elsif relation[9].is_integer? && ar == 2017 then
-            poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0].to_i, AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
-          elsif relation[9].is_integer? && ar == 2018 then
-            poster.insert(Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[5].split(",")[0].to_i, AFakt: relation[6], SNI: relation[7], SNI_namn: relation[8])
+          if relation[21].is_integer? && ar == 2014 then
+            poster.insert(Ar: ar, Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[21].split(",")[0].to_i, AFakt: relation[22], SNI: relation[23], SNI_namn: relation[24])
+          end
+          if relation[17].is_integer? && ar == 2015 then
+            poster.insert(Ar: ar, Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[17].split(",")[0].to_i, AFakt: relation[18], SNI: relation[19], SNI_namn: relation[20])
+          end
+          if relation[13].is_integer? && ar == 2016 then
+            poster.insert(Ar: ar, Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[13].split(",")[0].to_i, AFakt: relation[14], SNI: relation[15], SNI_namn: relation[16])
+          end
+          if relation[9].is_integer? && ar == 2017 then
+            poster.insert(Ar: ar, Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[9].split(",")[0].to_i, AFakt: relation[10], SNI: relation[11], SNI_namn: relation[12])
+          end
+          if relation[5].is_integer? && ar == 2018 then
+            poster.insert(Ar: ar, Lev: relation[0], Lev_namn: relation[1], Kop: relation[2], Kop_namn: relation[3], Typ: relation[4], Summa: relation[5].split(",")[0].to_i, AFakt: relation[6], SNI: relation[7], SNI_namn: relation[8])
           end
         end
       end
@@ -284,17 +288,22 @@ def skapa_databas
     poster.where(Kop: rad[2]).update(Kop_namn: rad[1])
   end
   puts "Klar kommunkoder => orgnr"
-      
-  CSV.foreach("kommuner.csv") do |kommun|
+   
+  CSV.foreach("kommuner.csv", :col_sep => ";") do |kommun|
     kommun = rensa(kommun)
-    poster.where(KKommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(KOms: -kommun[2].to_i*1000)
+    $ar.each do |ar|
+      poster.where(KKommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(KOms: kommun[ar-2010].to_i*1000)
+    end
   end  
-  CSV.foreach("landsting.csv") do |landsting|
+  CSV.foreach("landsting.csv", :col_sep => ";") do |landsting|
     landsting = rensa(landsting)
-    poster.where(KKommun: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(KOms: -landsting[2].to_i*1000000)
+    $ar.each do |ar|
+      poster.where(KKommun: landsting[0][0..1].sub(/^0+/, ""), Typ: "Landsting").update(KOms: landsting[ar-2010].to_i*1000000)
+    end
   end  
   puts "Klar kommuner"
-  # Skapa variabel summa gånger omsättning
+          
+  # Skapa variabel summa gånger omsättning, anställda och flagga lokal
   poster.each do |post|
     if !post[:Summa].nil? && !post[:Omsattning].nil? then
       summa_omsattning = post[:Summa]*post[:Omsattning] 
@@ -341,28 +350,33 @@ def skapa_tabell
   # Data för samtliga branscher
   kopare.each do |key, value|
     item = Inkopare.new(key)
-    tabell.where(Kop: key, SNI_A: "alla").update(Kop_namn: value[0], Typ: value[1], Inkopsandel: item.inkopsandel("alla"), Snittstorlek: item.snittstorlek("alla"), Snittanstallda: item.snittanstallda("alla"), Lokalandel: item.lokalandel("alla"), Offandel: item.offandel("alla"))
+    $ar.each do |ar|
+      tabell.insert(Ar: ar, Kop: key, Kop_namn: value[0], SNI_A: "alla", Typ: value[1], Inkopsandel: item.inkopsandel(ar, "alla"), Snittstorlek: item.snittstorlek(ar, "alla"), Snittanstallda: item.snittanstallda(ar, "alla"), Lokalandel: item.lokalandel(ar, "alla"), Offandel: item.offandel(ar, "alla"))
+    end  
   end   
   ("A".."U").each do |sni|
     puts "Avdelning: ", sni
     kopare.each do |key, value|
       item = Inkopare.new(key)
-      tabell.where(Kop: key, SNI_A: sni).update(Kop_namn: value[0], Typ: value[1], Inkopsandel: item.inkopsandel(sni), Snittstorlek: item.snittstorlek(sni), Snittanstallda: item.snittanstallda(sni), Lokalandel: item.lokalandel(sni), Offandel: item.offandel(sni))
+      $ar.each do |ar|
+        tabell.insert(Ar: ar, Kop: key, Kop_namn: value[0], SNI_A: sni, Typ: value[1], Inkopsandel: item.inkopsandel(ar, sni), Snittstorlek: item.snittstorlek(ar, sni), Snittanstallda: item.snittanstallda(ar, sni), Lokalandel: item.lokalandel(ar, sni), Offandel: item.offandel(ar, sni))
+      end 
     end   
   end
 end  
     
-#skapa_databas
-#skriv_till_csv
-#skapa_tabell
-#inkop = Inkopare.new("2321000016")
-#puts inkop.offandel("A")
+skapa_databas
+skriv_till_csv
+skapa_tabell
+inkop = Inkopare.new("2321000016")
+puts inkop.offandel(2014, "A")
     
 get '/diagram?' do
       
 end
     
 get '/tabell?' do
+  session[:ar] = params['ar'] if !params['ar'].nil?
   session[:kopare] = params['kopare'] if !params['kopare'].nil?
   session[:sni] = params['sni'] if !params['sni'].nil?
   session[:sortera] = params['sortera'] if !params['sortera'].nil?
