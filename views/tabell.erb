@@ -2,22 +2,22 @@
           <thead>
             <tr>
               <th><a class="nav-link <% if session[:sortera] == "kop_namn" %>table-active<% end %>" href="/tabell?sortera=kop_namn" up-target="#tabell" up-restore-scroll='true'  up-cache="false">Upphandlare</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "inkopsandel" %>table-active<% end %>" href="/tabell?sortera=inkopsandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpsandel</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "snittstorlek" %>table-active<% end %>" href="/tabell?sortera=snittstorlek" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittstorlek</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "inkopsandel" %>table-active<% end %>" href="/tabell?sortera=inkopsandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpsandel (procent)</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "snittstorlek" %>table-active<% end %>" href="/tabell?sortera=snittstorlek" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittstorlek (miljoner kronor)</a></th>
               <th><a class="nav-link <% if session[:sortera] == "snittanstallda" %>table-active<% end %>" href="/tabell?sortera=snittanstallda" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittanställda</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "lokalandel" %>table-active<% end %>" href="/tabell?sortera=lokalandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Lokal andel</a></th>
-               <th><a class="nav-link <% if session[:sortera] == "offandel" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpares andel</a></th>
+              <th><a class="nav-link <% if session[:sortera] == "lokalandel" %>table-active<% end %>" href="/tabell?sortera=lokalandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Lokal andel (procent)</a></th>
+               <th><a class="nav-link <% if session[:sortera] == "offandel" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpares andel (procent)</a></th>
             </tr>
           </thead>
           <tbody>
             <% @tabell_h.each do |post| %>
             <tr>
-              <td><%= post[:Kop_namn] %></td>
-              <td><%= post[:Inkopsandel].to_s[0..3] %></td>
-              <td><%= post[:Snittstorlek].to_s.split(".")[0] %></td>
-              <td><%= post[:Snittanstallda].to_s[0..5] %></td>
-              <td><%= post[:Lokalandel].to_s[0..3] %></td>
-              <td><%= post[:Offandel].to_s[0..3] %></td>
+              <td><% if post[:Kop_namn] != nil %><%= post[:Kop_namn] %><% end %></td>
+              <td><% if post[:Inkopsandel] != nil %><%= post[:Inkopsandel].round %><% end %></td>
+              <td><% if post[:Snittstorlek] != nil %><%= (post[:Snittstorlek]/1000000).round %><% end %></td>
+              <td><% if post[:Snittanstallda] != nil %><%= post[:Snittanstallda].round %><% end %></td>
+              <td><% if post[:Lokalandel] != nil %><%= post[:Lokalandel].round %><% end %></td>
+              <td><% if post[:Offandel] != nil %><%= post[:Offandel].round %><% end %></td>
             </tr>
             <% end %>
           </tbody>

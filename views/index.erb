@@ -103,8 +103,42 @@
           </div>
         </div>
       </div>
+      
+    <!-- Här börjar Google Charts -->
+      
+    <div id="diagram">
+      
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
 
-      <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['År', 'Upphandlare', 'Genomsnitt'],
+          ['2004',  1000,      400],
+          ['2005',  1170,      460],
+          ['2006',  660,       1120],
+          ['2007',  1030,      540]
+        ]);
+
+        var options = {
+          title: 'Inköpsandel',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+
+    <div id="curve_chart" style="width: 100%; height: auto"></div>
+      
+      </div>
+    
+      <!-- Här slutar Google Charts -->
 
       <h2 id="rubrik">Statistik om inköpare</h2>
       <div class="table-responsive">
