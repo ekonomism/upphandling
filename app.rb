@@ -51,6 +51,7 @@ def initiera_databas
     Integer :KKommun # köparens läns/kommunnummer
     Bignum :SummaOmsattning # Summa gånger omsättning
     Bignum :SummaAnstallda # Summa gånger anställda
+    Bignum :SummaOmsLev # Summan av omsättningen av leverantörerna till köparen
     Boolean :LokalFlagga # Flagga som är true om lokal
   end
   DB.create_table! :tabell do
@@ -65,6 +66,12 @@ def initiera_databas
     Float :Snittanstallda
     Float :Lokalandel
     Float :Offandel
+  end
+  DB.alter_table :relationer do
+    add_index [:Lev, :Ar]
+  end
+  DB.alter_table :tabell do
+    add_index [:SNI_A, :Typ]
   end
 end
 
@@ -166,27 +173,19 @@ class Inkopare
     return lokalandel
   end  
   
-  def offandel(ar, sni) # Andel av total försäljning som går till köparen
+  def offandel(ar, sni) # Andel av total omsättning som rör offentliga köpare
     poster = DB[:relationer]
     begin
-      # Skapa array med unika värden med orgnr till varje säljare
-      saljare = poster.select(:Lev).where(Ar: ar, Kop: kop).all.map{|x| x.values }.flatten.uniq
-      # Summera omsättning över säljare
-      summa_omsattning = 0
-      saljare.each do |saljaren|
-          omsattning = poster.where(Ar: ar, Lev: saljaren).exclude(Omsattning: nil).avg(:Omsattning)
-          puts saljaren, poster.where(Ar: ar, Lev: saljaren).exclude(Omsattning: nil).avg(:Omsattning)
-          summa_omsattning += omsattning if !omsattning.nil?
-      end
       # Beräkna försäljning till off sektor från säljarna
       if sni == "alla" then
         summa_inkop = poster.where(Ar: ar, Lev: saljare).exclude(Omsattning: nil).sum(:Summa)
+        summa_oms_lev = poster.where(Ar: ar, Lev: saljare).exclude(Omsattning: nil).avg(:Summa)
       else
         summa_inkop = poster.where(Ar: ar, Lev: saljare, SNI_A: sni).exclude(Omsattning: nil).sum(:Summa)
+        summa_oms_lev = poster.where(Ar: ar, Lev: saljare, SNI_A: sni).exclude(Omsattning: nil).avg(:Summa)
       end
-      offandel = 100*summa_inkop.to_f/summa_omsattning
+      offandel = 100*summa_inkop.to_f/summa_oms_lev
       offandel = nil if offandel.nan?
-      puts summa_inkop, summa_omsattning
     rescue StandardError => e
       puts e
       offandel = nil
@@ -261,6 +260,10 @@ def skapa_databas
     end
   end
   puts "Klar relationer"
+end
+          
+def addera_foretag     
+  poster = DB[:relationer]
   nummer = 0
   $ar.each do |ar|
     filnamn = "foretag_ar_" + ar.to_s + ".csv"
@@ -302,7 +305,20 @@ def skapa_databas
     end
   end  
   puts "Klar kommuner"
-          
+  
+  # Skapa variabel med summan av omsättningen för leverantörer till köpare
+  poster.each do |post|
+    saljare = poster.select(:Lev).where(Ar: ar, Kop: kop).all.map{|x| x.values }.flatten.uniq
+    # Summera omsättning över säljare
+    summa_omsattning = 0
+    saljare.each do |saljaren|
+      omsattning = poster.where(Ar: ar, Lev: saljaren).exclude(Omsattning: nil).avg(:Omsattning)
+      summa_omsattning += omsattning if !omsattning.nil?
+    end
+    poster.where(Id: post[:Id]).update(SummaOmsLev: summa_omsattning)
+  end
+  puts "Klar SummaOmsLev"
+  
   # Skapa variabel summa gånger omsättning, anställda och flagga lokal
   poster.each do |post|
     if !post[:Summa].nil? && !post[:Omsattning].nil? then
@@ -365,7 +381,8 @@ def skapa_tabell
   end
 end  
     
-skapa_databas
+#skapa_databas
+addera_foretag
 skriv_till_csv
 skapa_tabell
 inkop = Inkopare.new("2321000016")
