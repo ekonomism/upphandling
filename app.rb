@@ -51,7 +51,7 @@ def initiera_databas
     Integer :KKommun # köparens läns/kommunnummer
     Bignum :SummaOmsattning # Summa gånger omsättning
     Bignum :SummaAnstallda # Summa gånger anställda
-    Bignum :SummaOmsLev # Summan av omsättningen av leverantörerna till köparen
+    Bignum :SummaOmsLev # Summan av omsättningen för leverantörerna till köparen
     Boolean :LokalFlagga # Flagga som är true om lokal
   end
   DB.create_table! :tabell do
@@ -66,9 +66,6 @@ def initiera_databas
     Float :Snittanstallda
     Float :Lokalandel
     Float :Offandel
-  end
-  DB.alter_table :relationer do
-    add_index [:Lev, :Ar]
   end
   DB.alter_table :tabell do
     add_index [:SNI_A, :Typ]
@@ -258,6 +255,9 @@ def skapa_databas
     else
       puts "Ingen fil för SNI:", sni
     end
+  end
+  DB.alter_table :relationer do
+    add_index [:Lev, :Ar]
   end
   puts "Klar relationer"
 end
