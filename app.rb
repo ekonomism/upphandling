@@ -381,7 +381,7 @@ def skapa_tabell
   end
 end  
     
-#skapa_databas
+skapa_databas
 addera_foretag
 skriv_till_csv
 skapa_tabell
