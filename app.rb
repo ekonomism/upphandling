@@ -308,11 +308,11 @@ def addera_foretag
   
   # Skapa variabel med summan av omsättningen för leverantörer till köpare
   poster.each do |post|
-    saljare = poster.select(:Lev).where(Ar: ar, Kop: kop).all.map{|x| x.values }.flatten.uniq
+    saljare = poster.select(:Lev).where(Id: post[:Id]).all.map{|x| x.values }.flatten.uniq
     # Summera omsättning över säljare
     summa_omsattning = 0
     saljare.each do |saljaren|
-      omsattning = poster.where(Ar: ar, Lev: saljaren).exclude(Omsattning: nil).avg(:Omsattning)
+      omsattning = poster.where(Ar: post[:Ar], Lev: saljaren).exclude(Omsattning: nil).avg(:Omsattning)
       summa_omsattning += omsattning if !omsattning.nil?
     end
     poster.where(Id: post[:Id]).update(SummaOmsLev: summa_omsattning)
@@ -381,7 +381,7 @@ def skapa_tabell
   end
 end  
     
-skapa_databas
+#skapa_databas
 addera_foretag
 skriv_till_csv
 skapa_tabell
