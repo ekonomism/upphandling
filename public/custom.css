@@ -2,6 +2,9 @@ body {
   font-size: .875rem;
 }
 
+.help {
+  cursor: help;}
+
 .feather {
   width: 16px;
   height: 16px;
