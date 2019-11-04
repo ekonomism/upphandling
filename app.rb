@@ -76,6 +76,14 @@ def initiera_databas
   end
 end
 
+register do
+  def auth(user)
+    condition do
+      redirect "/auth" unless session[:inloggad] == true
+    end
+  end
+end
+
 # Helper
 class String
   def is_integer?
@@ -399,16 +407,6 @@ def addera_foretag
   end  
   puts "Klar rres_oms_summa och ares_oms_summa"
 end
-  
-def skriv_till_csv
-  poster = DB[:relationer]
-  CSV.open("upphandlingsdata.csv", "wb") do |csv|
-    poster.each_with_index do |row, index|
-      csv << row.keys if index == 0
-      csv << row.values
-    end
-  end
-end
 
 def skapa_tabell
   poster = DB[:relationer]
@@ -435,6 +433,16 @@ def skapa_tabell
   end
 end  
 
+def skriv_till_csv
+  poster = DB[:relationer]
+  CSV.open("upphandlingsdata.csv", "wb") do |csv|
+    poster.each_with_index do |row, index|
+      csv << row.keys if index == 0
+      csv << row.values
+    end
+  end
+end
+
 def skriv_tabell_till_csv
   poster = DB[:tabell]
   CSV.open("public/tabell.csv", "wb") do |csv|
@@ -451,8 +459,31 @@ skriv_till_csv
 skapa_tabell
 inkop = Inkopare.new("2321000016")
 puts inkop.offandel(2014, "A")
+  
+# Kolla om inloggad    
+before do
+  @user = session[:inloggad]
+end
+
+get "/auth" do
+  erb :signin
+end
+      
+post "/login" do
+  if params[:password] == "password" then
+    session[:inloggad] = true
+    redirect "/"
+  else
+    @fel = true
+    redirect "/auth"
+  end  
+end
+       
+get "/logout" do
+  session[:inloggad] = false
+end
     
-get '/diagram?' do
+get '/diagram?', :auth => :true do
   session[:diagram] = params['diagram'] if !params['diagram'].nil?
   session[:diagram] = params['rad'] if !params['rad'].nil?
   if session[:sni] == "alla" then
@@ -490,7 +521,7 @@ get '/diagram?' do
   end
 end
     
-get '/tabell?' do
+get '/tabell?', :auth => :true do
   session[:ar] = params['ar'] if !params['ar'].nil?
   session[:kopare] = params['kopare'] if !params['kopare'].nil?
   session[:sni] = params['sni'] if !params['sni'].nil?
@@ -524,7 +555,7 @@ get '/tabell?' do
   erb :tabell
 end
   
-get '/' do
+get '/', :auth => :true do
   erb :index
 end
 
