@@ -83,6 +83,7 @@ class String
   end
 end
 
+# Inköpare är en myndighet som köper av privata leverantörer, exempelvis en kommun, en region eller en statlig myndighet
 class Inkopare
   attr_reader :kop, :kommun, :lan
   
@@ -101,8 +102,8 @@ class Inkopare
       @lan = nil
     end  
   end
-  
-  def inkopsandel(ar, sni) # Andel inköp av kommunens totala omsättning
+  # Andel inköp av kommunens totala omsättning
+  def inkopsandel(ar, sni) 
     poster = DB[:relationer]
     begin
       if sni == "alla" then
@@ -119,8 +120,8 @@ class Inkopare
     end   
     return inkopsandel
   end  
-    
-  def snittstorlek(ar, sni) # Snittstorlek på leverantörer vägt efter kontraktsstorlek
+  # Snittstorlek på leverantörer vägt efter kontraktsstorlek 
+  def snittstorlek(ar, sni) 
     poster = DB[:relationer]
     begin
       if sni == "alla" then
@@ -137,8 +138,8 @@ class Inkopare
     end
     return snittstorlek
   end
-    
-  def snittanstallda(ar, sni) # Snitt antal anställda för leverantörer vägt efter kontraktsstorlek
+  # Snitt antal anställda för leverantörer vägt efter kontraktsstorlek
+  def snittanstallda(ar, sni) 
     poster = DB[:relationer]
     begin
       if sni == "alla" then
@@ -155,8 +156,8 @@ class Inkopare
     end
     return snittanstallda
   end
-  
-  def lokalandel(ar, sni) # Andel som kommuner köper av lokala leverantörer
+  # Andel som kommuner köper av lokala leverantörer
+  def lokalandel(ar, sni) 
     poster = DB[:relationer]
     begin
       if sni == "alla" then
@@ -220,7 +221,7 @@ class Inkopare
         ares_oms_summa = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:AresOmsSumma)
         summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:Summa)
       end
-      a_res = 100*rres_oms_summa.to_f/summa_oms_lev
+      a_res = 100*ares_oms_summa.to_f/summa_oms_lev
       a_res = nil if a_res.nan?
     rescue StandardError => e
       a_res = nil
@@ -364,14 +365,14 @@ def addera_foretag
       poster.where(Id: post[:Id]).update(SummaOmsattning: summa_omsattning)
     end
   end  
-  puts "Klar summa gånger omsättning"
+  puts "Klar Summa gånger Omsättning"
   poster.each do |post|
     if !post[:Summa].nil? && !post[:Anstallda].nil? then
       summa_anstallda = post[:Summa]*post[:Anstallda] 
       poster.where(Id: post[:Id]).update(SummaAnstallda: summa_anstallda)
     end
   end  
-  puts "Klar summa gånger anställda"
+  puts "Klar Summa gånger Anställda"
   poster.each do |post|
     if !post[:Lan].nil? && !post[:Kommun].nil? then
       if ((post[:Kommun] == post[:KKommun]) && (post[:Typ] == "Kommun")) || ((post[:Lan] == post[:KKommun]) && (post[:Typ] == "Landsting")) then
@@ -381,17 +382,17 @@ def addera_foretag
       end  
     end  
   end  
-  puts "Klar flagga lokal"
+  puts "Klar flagga Lokal"
   
   # Skapa variabler r_res dividerat med omsättning gånger Summa och a_res dividerat med omsättning gånger Summa
   poster.each do |post|
-    if !post[:Summa].nil? && !post[:Omsattning].nil? && !post[:RRes].nil? then
+    if !post[:Summa].nil? && !post[:Omsattning].nil? && !post[:RRes].nil? && !post[:Omsattning] == 0 then
       rres_oms_summa = post[:Summa]*post[:RRes]/post[:Omsattning] 
       poster.where(Id: post[:Id]).update(RresOmsSumma: rres_oms_summa)
     end
   end  
   poster.each do |post|
-    if !post[:Summa].nil? && !post[:Omsattning].nil? && !post[:ARes].nil? then
+    if !post[:Summa].nil? && !post[:Omsattning].nil? && !post[:ARes].nil? && !post[:Omsattning] == 0 then
       ares_oms_summa = post[:Summa]*post[:ARes]/post[:Omsattning] 
       poster.where(Id: post[:Id]).update(AresOmsSumma: ares_oms_summa)
     end
@@ -434,7 +435,7 @@ def skapa_tabell
   end
 end  
     
-skapa_databas
+#skapa_databas
 addera_foretag
 skriv_till_csv
 skapa_tabell
@@ -462,7 +463,7 @@ get '/diagram?' do
       snitt[ar] = tabell.where(Ar: ar, SNI_A: session[:sni], Typ: session[:kopare]).avg(:Snittanstallda)
     elsif session[:diagram] == 'lokalandel' then
       varde[ar] = tabell.where(Ar: ar, SNI_A: session[:sni], Kop: session[:rad]).avg(:Lokalandel)
-      snitt[ar] = tabell.where(Ar: ar, SNI_A: session[:sni], Typ: session[:kopare]).avg(:Lokalandel
+      snitt[ar] = tabell.where(Ar: ar, SNI_A: session[:sni], Typ: session[:kopare]).avg(:Lokalandel)
     elsif session[:diagram] == 'offandel' then
       varde[ar] = tabell.where(Ar: ar, SNI_A: session[:sni], Kop: session[:rad]).avg(:Offandel)
       snitt[ar] = tabell.where(Ar: ar, SNI_A: session[:sni], Typ: session[:kopare]).avg(:Offandel)
