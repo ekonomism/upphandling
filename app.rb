@@ -310,7 +310,7 @@ def addera_foretag
       foretag = rensa(foretag)
       nummer += 1
       puts nummer if nummer % 10000 == 0
-      poster.where(Ar: ar, Lev: foretag[0]).update(Lan: foretag[6], Kommun: foretag[7], Stlk_klass: foretag[10], Reg_datum: foretag[16], Anstallda: foretag[35], Omsattning: foretag[43].to_i*1000, RRes: foretag[55], ARes: foretag[76])
+      poster.where(Ar: ar, Lev: foretag[0]).update(Lan: foretag[6], Kommun: foretag[7], Stlk_klass: foretag[10], Reg_datum: foretag[16], Anstallda: foretag[35], Omsattning: foretag[43].to_i*1000, RRes: foretag[55].to_i*1000, ARes: foretag[76].to_i*1000)
     end   
   end
   puts "Klar företag"
@@ -434,6 +434,16 @@ def skapa_tabell
     end   
   end
 end  
+
+def skriv_tabell_till_csv
+  poster = DB[:tabell]
+  CSV.open("public/tabell.csv", "wb") do |csv|
+    poster.each_with_index do |row, index|
+      csv << row.keys if index == 0
+      csv << row.values
+    end
+  end
+end
     
 #skapa_databas
 addera_foretag
