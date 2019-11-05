@@ -71,9 +71,6 @@ def initiera_databas
     Float :RRes
     Float :ARes
   end
-  DB.alter_table :tabell do
-    add_index [:SNI_A, :Typ]
-  end
 end
 
 register do
@@ -430,6 +427,10 @@ def skapa_tabell
         tabell.insert(Ar: ar, Kop: key, Kop_namn: value[0], SNI_A: sni, Typ: value[1], Inkopsandel: item.inkopsandel(ar, sni), Snittstorlek: item.snittstorlek(ar, sni), Snittanstallda: item.snittanstallda(ar, sni), Lokalandel: item.lokalandel(ar, sni), Offandel: item.offandel(ar, sni), RRes: item.r_res(ar, sni), ARes: item.a_res(ar, sni))
       end 
     end   
+  end
+  # Inför index efter att data finns på plats
+  DB.alter_table :tabell do
+    add_index [:SNI_A, :Typ]
   end
 end  
 
