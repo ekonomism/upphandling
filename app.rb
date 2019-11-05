@@ -453,7 +453,7 @@ def skriv_tabell_till_csv
   end
 end
     
-#skapa_databas
+skapa_databas
 addera_foretag
 skriv_till_csv
 skapa_tabell
