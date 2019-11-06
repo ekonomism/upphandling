@@ -119,7 +119,7 @@ class Inkopare
         omsattning = poster.where(Ar: ar, Kop: @kop).exclude(KOms: nil).avg(:KOms)
       end
       inkopsandel = 100*summa_inkop.to_f/omsattning
-      inkopsandel = nil if inkopsandel.nan?
+      inkopsandel = nil if inkopsandel.nan? || inkopsandel.infinite?
     rescue StandardError => e
       inkopsandel = nil  
     end   
@@ -137,7 +137,7 @@ class Inkopare
         summa = poster.where(Ar: ar, SNI_A: sni, Kop: @kop).exclude(SummaOmsattning: nil).sum(:Summa)
       end
       snittstorlek = summa_omsattning.to_f/summa
-      snittstorlek = nil if snittstorlek.nan?
+      snittstorlek = nil if snittstorlek.nan?  || snittstorlek.infinite?
     rescue StandardError => e
       snittstorlek = nil
     end
@@ -155,7 +155,7 @@ class Inkopare
         summa = poster.where(Ar: ar, SNI_A: sni, Kop: @kop).exclude(SummaAnstallda: nil).sum(:Summa)
       end
       snittanstallda = summa_anstallda.to_f/summa
-      snittanstallda = nil if snittanstallda.nan?
+      snittanstallda = nil if snittanstallda.nan? || snittanstallda.infinite?
     rescue StandardError => e
       snittanstallda  = nil
     end
@@ -173,7 +173,7 @@ class Inkopare
         summa_inkop_ejlokal = poster.where(Ar: ar, SNI_A: sni, Kop: @kop, LokalFlagga: false).exclude(LokalFlagga: nil).sum(:Summa)
       end
       lokalandel = 100*summa_inkop_lokal.to_f/(summa_inkop_lokal + summa_inkop_ejlokal)
-      lokalandel = nil if lokalandel.nan?
+      lokalandel = nil if lokalandel.nan? || lokalandel.infinite?
     rescue StandardError => e
       lokalandel = nil
     end 
@@ -191,7 +191,7 @@ class Inkopare
         summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).avg(:Summa)
       end
       offandel = 100*summa_inkop.to_f/summa_oms_lev
-      offandel = nil if offandel.nan?
+      offandel = nil if offandel.nan? || offandel.infinite?
     rescue StandardError => e
       offandel = nil
     end
@@ -209,7 +209,7 @@ class Inkopare
         summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:Summa)
       end
       r_res = 100*rres_oms_summa.to_f/summa_oms_lev
-      r_res = nil if r_res.nan?
+      r_res = nil if r_res.nan? || r_res.infinite?
     rescue StandardError => e
       r_res = nil
     end
@@ -227,7 +227,7 @@ class Inkopare
         summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:Summa)
       end
       a_res = 100*ares_oms_summa.to_f/summa_oms_lev
-      a_res = nil if a_res.nan?
+      a_res = nil if a_res.nan? || a_res.infinite?
     rescue StandardError => e
       a_res = nil
     end
