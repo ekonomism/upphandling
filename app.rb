@@ -51,7 +51,7 @@ def initiera_databas
     Integer :KKommun # köparens läns/kommunnummer
     Bignum :SummaOmsattning # Summa gånger omsättning
     Bignum :SummaAnstallda # Summa gånger anställda
-    Bignum :SummaOmsLev # Summan av omsättningen för leverantörerna till köparen
+    Integer :AndelOffLev # Andel offentliga leveranser gånger summa
     Bignum :RresOmsSumma # Årets resultat dividerat med omsättning gånger Summa
     Bignum :AresOmsSumma # Rörelseresultat dividerat med omsättningen gånger Summa
     Boolean :LokalFlagga # Flagga som är true om lokal
@@ -112,10 +112,10 @@ class Inkopare
     poster = DB[:relationer]
     begin
       if sni == "alla" then
-        summa_inkop = poster.where(Ar: ar, Kop: @kop).exclude(Summa: nil).sum(:Summa)
+        summa_inkop = poster.where(Ar: ar, Kop: @kop).exclude(KOms: nil).sum(:Summa)
         omsattning = poster.where(Ar: ar, Kop: @kop).exclude(KOms: nil).avg(:KOms)
       else
-        summa_inkop = poster.where(Ar: ar, SNI_A: sni, Kop: @kop).exclude(Summa: nil).sum(:Summa)
+        summa_inkop = poster.where(Ar: ar, SNI_A: sni, Kop: @kop).exclude(KOms: nil).sum(:Summa)
         omsattning = poster.where(Ar: ar, Kop: @kop).exclude(KOms: nil).avg(:KOms)
       end
       inkopsandel = 100*summa_inkop.to_f/omsattning
@@ -184,13 +184,13 @@ class Inkopare
     poster = DB[:relationer]
     begin
       if sni == "alla" then
-        summa_inkop = poster.where(Ar: ar, Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
-        summa_oms_lev = poster.where(Ar: ar, Kop: @kop).exclude(Omsattning: nil).avg(:Summa)
+        andel_off_lev = poster.where(Ar: ar, Kop: @kop).exclude(AndelOffLev: nil).sum(:AndelOffLev)
+        summa_inkop = poster.where(Ar: ar, Kop: @kop).exclude(AndelOffLev: nil).sum(:Summa)
       else
-        summa_inkop = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:Summa)
-        summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).avg(:Summa)
+        andel_off_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(AndelOffLev: nil).sum(:AndelOffLev)
+        summa_inkop = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(AndelOffLev: nil).sum(:Summa)
       end
-      offandel = 100*summa_inkop.to_f/summa_oms_lev
+      offandel = 100*andel_off_lev.to_f/summa_inkop
       offandel = nil if offandel.nan? || offandel.infinite?
     rescue StandardError => e
       offandel = nil
@@ -202,11 +202,11 @@ class Inkopare
     poster = DB[:relationer]
     begin
       if sni == "alla" then
-        rres_oms_summa = poster.where(Ar: ar, Kop: @kop).exclude(Omsattning: nil).sum(:RresOmsSumma)
-        summa_oms_lev = poster.where(Ar: ar, Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
+        rres_oms_summa = poster.where(Ar: ar, Kop: @kop).exclude(RresOmsSumma: nil).sum(:RresOmsSumma)
+        summa_oms_lev = poster.where(Ar: ar, Kop: @kop).exclude(RresOmsSumma: nil).sum(:Summa)
       else
-        rres_oms_summa = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:RresOmsSumma)
-        summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:Summa)
+        rres_oms_summa = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(RresOmsSumma: nil).sum(:RresOmsSumma)
+        summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(RresOmsSumma: nil).sum(:Summa)
       end
       r_res = 100*rres_oms_summa.to_f/summa_oms_lev
       r_res = nil if r_res.nan? || r_res.infinite?
@@ -220,11 +220,11 @@ class Inkopare
     poster = DB[:relationer]
     begin
       if sni == "alla" then
-        ares_oms_summa = poster.where(Ar: ar, Kop: @kop).exclude(Omsattning: nil).sum(:AresOmsSumma)
-        summa_oms_lev = poster.where(Ar: ar, Kop: @kop).exclude(Omsattning: nil).sum(:Summa)
+        ares_oms_summa = poster.where(Ar: ar, Kop: @kop).exclude(AresOmsSumma: nil).sum(:AresOmsSumma)
+        summa_oms_lev = poster.where(Ar: ar, Kop: @kop).exclude(AresOmsSumma: nil).sum(:Summa)
       else
-        ares_oms_summa = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:AresOmsSumma)
-        summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(Omsattning: nil).sum(:Summa)
+        ares_oms_summa = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(AresOmsSumma: nil).sum(:AresOmsSumma)
+        summa_oms_lev = poster.where(Ar: ar, Kop: @kop, SNI_A: sni).exclude(AresOmsSumma: nil).sum(:Summa)
       end
       a_res = 100*ares_oms_summa.to_f/summa_oms_lev
       a_res = nil if a_res.nan? || a_res.infinite?
@@ -350,18 +350,14 @@ def addera_foretag
   end  
   puts "Klar kommuner"
   
-  # Skapa variabel med summan av omsättningen för leverantörer till köpare
+  # Skapa variabel med andelen off försäljning för leverantörer till köpare
   poster.each do |post|
-    saljare = poster.select(:Lev).where(Id: post[:Id]).all.map{|x| x.values }.flatten.uniq
-    # Summera omsättning över säljare
-    summa_omsattning = 0
-    saljare.each do |saljaren|
-      omsattning = poster.where(Ar: post[:Ar], Lev: saljaren).exclude(Omsattning: nil).avg(:Omsattning)
-      summa_omsattning += omsattning if !omsattning.nil?
-    end
-    poster.where(Id: post[:Id]).update(SummaOmsLev: summa_omsattning)
+    off_fors = poster.where(Ar: post[:Ar], Lev: post[:Lev]).sum(:Summa)
+    omsattning = poster.where(Ar: post[:Ar], Lev: post[:Lev]).exclude(Omsattning: nil).avg(:Omsattning)
+    andel_off_lev = off_fors*post[:Summa]/omsattning
+    poster.where(Id: post[:Id]).update(AndelOffLev: andel_off_lev)
   end
-  puts "Klar SummaOmsLev"
+  puts "Klar Andel offentliga leverantörer"
   
   # Skapa variabel summa gånger omsättning, anställda och flagga lokal
   poster.each do |post|
