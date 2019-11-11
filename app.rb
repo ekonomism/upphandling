@@ -96,16 +96,8 @@ class Inkopare
     begin
       poster = DB[:relationer]
       @kop = kop
-      @typ = poster.select(:typ).where(kop: kop).first[:typ]
-      @kommun = poster.select(:kommun).where(kop: kop).exclude(kommun: nil).first[:kommun]
-      @lan = poster.select(:lan).where(kop: kop).exclude(lan: nil).first[:lan]
     rescue StandardError => e
-      puts "Error"
       puts e
-      @kop = nil
-      @typ = nil
-      @kommun = nil
-      @lan = nil
     end  
   end
   # Andel inköp av kommunens totala omsättning
@@ -347,7 +339,7 @@ def addera_foretag
   CSV.foreach("kommuner.csv", :col_sep => ";") do |kommun|
     kommun = rensa(kommun)
     $ar.each do |ar|
-      poster.where(kkommun: kommun[0][0..3].sub(/^0+/, ""), Typ: "Kommun").update(koms: kommun[ar-2010].to_i*1000)
+      poster.where(kkommun: kommun[0][0..3].sub(/^0+/, ""), typ: "Kommun").update(koms: kommun[ar-2010].to_i*1000)
     end
   end  
   CSV.foreach("landsting.csv", :col_sep => ";") do |landsting|
@@ -430,7 +422,6 @@ def skapa_tabell
   kopare.each do |key, value|
     item = Inkopare.new(key)
     $ar.each do |ar|
-      puts value[0], value[1]
       tabell.insert(ar: ar, kop: key, kopnamn: value[0], snia: "alla", typ: value[1], inkopsandel: item.inkopsandel(ar, "alla"), snittstorlek: item.snittstorlek(ar, "alla"), snittanstallda: item.snittanstallda(ar, "alla"), lokalandel: item.lokalandel(ar, "alla"), offandel: item.offandel(ar, "alla"), rres: item.r_res(ar, "alla"), ares: item.a_res(ar, "alla"))
     end  
   end   
