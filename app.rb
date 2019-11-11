@@ -27,7 +27,7 @@ DB = Sequel.connect('sqlite://foretag.db')
 def initiera_databas
   # Skapar table och skriver över om den existerar
   DB.create_table! :relationer do
-    primary_key :Id
+    primary_key :id
     Integer :ar
     String :lev, null: false
     String :levnamn
