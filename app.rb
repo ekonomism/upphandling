@@ -240,7 +240,7 @@ end
 def skapa_databas
   initiera_databas
   poster = DB[:relationer]
-  (1..1).each do |sni|
+  (1..100).each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
     if File.file?(filnamn) then
@@ -268,8 +268,8 @@ def skapa_databas
       puts "Ingen fil för SNI:", sni
     end
   end
-  #udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
-  udda_sni = []
+  udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
+  #udda_sni = []
   udda_sni.each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
@@ -430,7 +430,7 @@ def skapa_tabell
     kopare.each do |key, value|
       item = Inkopare.new(key)
       $ar.each do |ar|
-        tabell.insert(ar: ar, kop: key, Kopnamn: value[0], snia: sni, typ: value[1], inkopsandel: item.inkopsandel(ar, sni), snittstorlek: item.snittstorlek(ar, sni), snittanstallda: item.snittanstallda(ar, sni), lokalandel: item.lokalandel(ar, sni), offandel: item.offandel(ar, sni), rres: item.r_res(ar, sni), ares: item.a_res(ar, sni))
+        tabell.insert(ar: ar, kop: key, kopnamn: value[0], snia: sni, typ: value[1], inkopsandel: item.inkopsandel(ar, sni), snittstorlek: item.snittstorlek(ar, sni), snittanstallda: item.snittanstallda(ar, sni), lokalandel: item.lokalandel(ar, sni), offandel: item.offandel(ar, sni), rres: item.r_res(ar, sni), ares: item.a_res(ar, sni))
       end 
     end   
   end
@@ -438,6 +438,7 @@ def skapa_tabell
   DB.alter_table :tabell do
     add_index [:snia, :typ]
   end
+  puts "Klar Skapa tabell"
 end  
 
 def skriv_till_csv
@@ -448,6 +449,7 @@ def skriv_till_csv
       csv << row.values
     end
   end
+  puts "Klar Skriv Relationer till CSV"
 end
 
 def skriv_tabell_till_csv
@@ -458,19 +460,21 @@ def skriv_tabell_till_csv
       csv << row.values
     end
   end
+  puts "Klar skriv Tabell till CSV"
 end
     
-skapa_databas
-addera_foretag
-skriv_till_csv
-skapa_tabell
-inkop = Inkopare.new("2120001892")
-puts "Offandel", inkop.offandel(2014, "A")
-puts "Snittstorlek", inkop.snittstorlek(2014, "A")
-puts "Snittanstallda", inkop.snittanstallda(2014, "A")
-puts "Lokalandel", inkop.lokalandel(2014, "A")
-puts "Rörelseresultat", inkop.r_res(2014, "A")
-puts "Årets resultat", inkop.a_res(2014, "A")
+#skapa_databas
+#addera_foretag
+#skriv_till_csv
+#skriv_tabell_till_csv
+#skapa_tabell
+inkop = Inkopare.new("2120001579")
+puts "Offandel", inkop.offandel(2017, "A")
+puts "Snittstorlek", inkop.snittstorlek(2017, "A")
+puts "Snittanstallda", inkop.snittanstallda(2017, "A")
+puts "Lokalandel", inkop.lokalandel(2017, "A")
+puts "Rörelseresultat", inkop.r_res(2017, "A")
+puts "Årets resultat", inkop.a_res(2017, "A")
   
 # Kolla om inloggad    
 before do
@@ -501,7 +505,7 @@ get '/diagram?', :auth => :true do
   if session[:sni] == "alla" then
     tabell = DB[:tabell]
   else
-    tabell = DB[:tabell].where(SNI_A: session[:sni])
+    tabell = DB[:tabell].where(snia: session[:sni])
   end
   @diagram = Hash.new
   $ar.each do |ar|
@@ -541,7 +545,7 @@ get '/tabell?', :auth => :true do
   if session[:sni] == "alla" then
     tabell = DB[:tabell]
   else
-    tabell = DB[:tabell].where(SNI_A: session[:sni])
+    tabell = DB[:tabell].where(snia: session[:sni])
   end
   if session[:sortera] == 'kop_namn' then
     tabell = tabell.order(:kopnamn)
@@ -563,7 +567,7 @@ get '/tabell?', :auth => :true do
   typ = "Kommun" if session[:kopare] == 'kommun'
   typ = "Landsting" if session[:kopare] == 'lan'
   typ = "Statlig enhet" if session[:kopare] == 'myndighet'
-  @tabell_h = tabell.where(Ar: session[:ar], typ: typ, snia: session[:sni]).all
+  @tabell_h = tabell.where(ar: session[:ar], typ: typ, snia: session[:sni]).all
   erb :tabell
 end
   
