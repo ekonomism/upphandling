@@ -1,27 +1,27 @@
-<table id="tabell" class="table table-striped table-sm table-hover text-center">
+<table id="tabell" class="table table-striped table-sm table-hover text-center table-dark">
           <thead>
             <tr>
-              <th><a class="nav-link <% if session[:sortera] == "kop_namn" %>table-active<% end %>" href="/tabell?sortera=kop_namn" up-target="#tabell" up-restore-scroll='true'  up-cache="false">Upphandlare</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "inkopsandel" %>table-active<% end %>" href="/tabell?sortera=inkopsandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpsandel (procent)</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "snittstorlek" %>table-active<% end %>" href="/tabell?sortera=snittstorlek" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittstorlek (miljoner kronor)</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "snittanstallda" %>table-active<% end %>" href="/tabell?sortera=snittanstallda" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittanställda</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "lokalandel" %>table-active<% end %>" href="/tabell?sortera=lokalandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Lokal andel (procent)</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "offandel" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpares andel (procent)</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "r_res" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Rörelseresultat (procent)</a></th>
-              <th><a class="nav-link <% if session[:sortera] == "a_res" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Årets resultat (procent)</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "kop_namn" %>table-active<% end %>" href="/tabell?sortera=kop_namn" up-target="#tabell" up-restore-scroll='true'  up-cache="false">Upphandlare</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "inkopsandel" %>table-active<% end %>" href="/tabell?sortera=inkopsandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpsandel (procent)</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "snittstorlek" %>table-active<% end %>" href="/tabell?sortera=snittstorlek" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittstorlek (miljoner kronor)</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "snittanstallda" %>table-active<% end %>" href="/tabell?sortera=snittanstallda" up-target="#tabell" up-restore-scroll='true' up-cache="false">Snittanställda</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "lokalandel" %>table-active<% end %>" href="/tabell?sortera=lokalandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Lokal andel (procent)</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "offandel" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Inköpares andel (procent)</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "r_res" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Rörelseresultat (procent)</a></th>
+              <th><a class="nav-link text-light <% if session[:sortera] == "a_res" %>table-active<% end %>" href="/tabell?sortera=offandel" up-target="#tabell" up-restore-scroll='true' up-cache="false">Årets resultat (procent)</a></th>
             </tr>
           </thead>
           <tbody>
             <% @tabell_h.each do |post| %>
             <tr>
-              <td><a class="nav-link help <% if session[:diagram] == "kop_namn" && post[:kopnamn] == session[:rad] %>table-active<% end %>" <% if post[:kopnamn] != nil %><%= post[:kopnamn] %><% end %></a></td>
-              <td><a class="nav-link help <% if session[:diagram] == "inkopsandel" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=inkopsandel&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false" <% if post[:inkopsandel] != nil %><%= post[:inkopsandel].round %><% end %></a></td>
-              <td><a class="nav-link help <% if session[:diagram] == "snittstorlek" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=snittstorlek&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false" <% if post[:snittstorlek] != nil %><%= (post[:snittstorlek]/1000000).round %><% end %></a></td>
-              <td><a class="nav-link help <% if session[:diagram] == "snittanstallda" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=snittanstallda&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false" <% if post[:snittanstallda] != nil %><%= post[:snittanstallda].round %><% end %></a></td>
-              <td><a class="nav-link help <% if session[:diagram] == "lokalandel" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=lokalandel&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false" <% if post[:lokalandel] != nil %><%= post[:lokalandel].round %><% end %></a></td>
-              <td><a class="nav-link help <% if session[:diagram] == "offandel" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=offandel&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false" <% if post[:offandel] != nil %><%= post[:offandel].round %><% end %></a></td>
-              <td><a class="nav-link help <% if session[:diagram] == "r_res" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=r_res&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false" <% if post[:rres] != nil %><%= post[:rres].round %><% end %></a></td>
-              <td><a class="nav-link help <% if session[:diagram] == "a_res" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=a_res&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false" <% if post[:ares] != nil %><%= post[:ares].round %><% end %></a></td>
+              <td><a class="nav-link<% if session[:diagram] == "kop_namn" && post[:kopnamn] == session[:rad] %>table-active<% end %>"><% if post[:kopnamn] != nil %><%= post[:kopnamn] %><% end %></a></td>
+              <td><a class="nav-link help text-light <% if session[:diagram] == "inkopsandel" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=inkopsandel&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false"><% if post[:inkopsandel] != nil %><%= post[:inkopsandel].round %><% end %></a></td>
+              <td><a class="nav-link help text-light <% if session[:diagram] == "snittstorlek" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=snittstorlek&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false"><% if post[:snittstorlek] != nil %><%= (post[:snittstorlek]/1000000).round %><% end %></a></td>
+              <td><a class="nav-link help text-light <% if session[:diagram] == "snittanstallda" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=snittanstallda&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false"><% if post[:snittanstallda] != nil %><%= post[:snittanstallda].round %><% end %></a></td>
+              <td><a class="nav-link help text-light <% if session[:diagram] == "lokalandel" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=lokalandel&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false"><% if post[:lokalandel] != nil %><%= post[:lokalandel].round %><% end %></a></td>
+              <td><a class="nav-link help text-light <% if session[:diagram] == "offandel" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=offandel&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false"><% if post[:offandel] != nil %><%= post[:offandel].round %><% end %></a></td>
+              <td><a class="nav-link help text-light <% if session[:diagram] == "r_res" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=r_res&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false"><% if post[:rres] != nil %><%= post[:rres].round %><% end %></a></td>
+              <td><a class="nav-link help text-light <% if session[:diagram] == "a_res" && post[:kopnamn] == session[:rad] %>table-active<% end %>" href="/tabell?diagram=a_res&rad=<%= post[:kopnamn] %>" up-target="#diagram" up-restore-scroll='true' up-cache="false"><% if post[:ares] != nil %><%= post[:ares].round %><% end %></a></td>
             </tr>
             <% end %>
           </tbody>
@@ -51,9 +51,9 @@
 <ul id="ar" class="nav flex-column">   
       <% $ar.each do |ar| %>
           <li class="nav-item">
-            <a class="nav-link <% if session[:ar] == ar %>active<% end %>" href="/diagram?ar=<%= ar %>" up-target="#diagram, #ar" up-cache="false">
+            <a class="nav-link <% if session[:ar] == ar.to_s %>active<% end %>" href="/tabell?ar=<%= ar %>" up-target="#tabell, #ar" up-cache="false">
               <img src="/icons/calendar.png" alt="icon name">
-              Kommuner
+              <%= ar %>
             </a>
           </li>
        <% end %>
@@ -86,9 +86,11 @@
       function drawChart() {
         var data = google.visualization.arrayToDataTable([
           ['År', 'Upphandlare', 'Genomsnitt'],
-          $ar.each do |rad|
-            ['<%= rad %>', <%= @diagram[ar]['varde'] %>, <%= @diagram[ar]['snitt] %>],
-          end
+          <% $ar.each do |rad| %>
+            <% if !@diagram[rad][0].nil? && !@diagram[rad][1].nil? %>
+              ['<%= rad %>', <%= @diagram[rad][0] %>, <%= @diagram[rad][1] %>],
+            <% end %>
+          <% end %>
           ]);
 
         var options = {

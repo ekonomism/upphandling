@@ -35,7 +35,7 @@
   <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
   <ul class="navbar-nav px-3">
     <li class="nav-item text-nowrap">
-      <a class="nav-link" href="#">Sign out</a>
+      <a class="nav-link" href="/logout">Logga ut</a>
     </li>
   </ul>
 </nav>
@@ -47,7 +47,7 @@
 
         <h4 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
           <span>Typ av köpare</span>
-        </h6>
+        </h4>
         
         <ul id="meny" class="nav flex-column">
           
@@ -70,10 +70,25 @@
             </a>
           </li>
         </ul>
+        
+        <h4 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+          <span>År</span>
+        </h4>
+        
+        <ul id="ar" class="nav flex-column">  
+         <% $ar.each do |ar| %>
+          <li class="nav-item">
+            <a class="nav-link <% if session[:ar] == ar %>active<% end %>" href="/tabell?ar=<%= ar %>" up-target="#tabell, #ar" up-cache="false">
+              <img src="/icons/calendar.png" alt="icon name">
+              <%= ar %>
+            </a>
+          </li>
+         <% end %>
+         </ul>
 
         <h4 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
           <span>Bransch</span>
-        </h6>
+        </h4>
           
         <ul id="snimeny" class="nav flex-column mb-2">
           <li class="nav-item">
