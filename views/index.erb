@@ -31,7 +31,7 @@
   </head>
   <body>
   <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-  <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Svenskt Näringsliv - upphandlingsdata</a>
+  <a id="sn" class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Svenskt Näringsliv - upphandlingsdata</a>
   <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
   <ul class="navbar-nav px-3">
     <li class="nav-item text-nowrap">
@@ -110,50 +110,22 @@
     </nav>
 
     <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Trend</h1>
+      <div class="d-flex justify-content-between flex-wrap flex-sm-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Utveckling över tid</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group mr-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            <a class="btn btn-primary" href="/data" role="button">Data om köpare</a>
+            <a class="btn btn-secondary" href="/transaktioner" role="button">Transaktionsdata</a>
           </div>
         </div>
+
       </div>
       
-    <!-- Här börjar Google Charts -->
-      
-    <div id="diagram">
-      
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load('current', {'packages':['corechart']});
-      google.charts.setOnLoadCallback(drawChart);
-
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-          ['År', 'Upphandlare', 'Genomsnitt'],
-          ['2004',  1000,      400],
-          ['2005',  1170,      460],
-          ['2006',  660,       1120],
-          ['2007',  1030,      540]
-        ]);
-
-        var options = {
-          title: 'Inköpsandel',
-          curveType: 'function',
-          legend: { position: 'bottom' }
-        };
-
-        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-
-        chart.draw(data, options);
-      }
-    </script>
-
-    <div id="curve_chart" style="width: 100%; height: auto"></div>
-      
+      <!-- Här börjar Google Charts -->
+      <div>
+         <iframe name="diagram" src="/diagram" width="800" height="400" seamless scrolling="no"></iframe>
       </div>
-    
-      <!-- Här slutar Google Charts -->
+    <!-- Här slutar Google Charts -->
 
       <h2 id="rubrik">Statistik om inköpare</h2>
       <div class="table-responsive">
@@ -190,8 +162,4 @@
  <script src="jquery-3.4.1.min.js"></script>
  <script src="bootstrap.bundle.min.js"></script>
  <script src="unpoly.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.9.0/feather.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
- <script src="dashboard.js"></script></body>
-
 </html>

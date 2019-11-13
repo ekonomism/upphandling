@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="sv">
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['År', '<%= @diagram[$ar[0]][2].values[0] %>', 'Genomsnitt'],
+          <% $ar.each do |rad| %>
+            <% if !@diagram[rad][0].nil? && !@diagram[rad][1].nil? %>
+              ['<%= rad %>', <%= @diagram[rad][0] %>, <%= @diagram[rad][1] %>],
+            <% end %>
+          <% end %>
+          ]);
+
+        var options = {
+          title: '<%= $nyckeltalsnamn[session[:diagram]] %>',
+          legend: { position: 'bottom' },
+          width: 800,
+          height: 400,
+          lineWidth: 6,
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+
+    <div id="curve_chart"></div>
+
+</html>

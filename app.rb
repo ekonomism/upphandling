@@ -15,7 +15,8 @@ require 'securerandom'
 enable :sessions
 set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
 $ar = [2014, 2015, 2016, 2017]
-
+$nyckeltalsnamn = {'inkopsandel' => 'Inköpsandel (procent av inköparens bruttoomsättning)', 'snittstorlek' => 'Snittstorlek för leverantörer (miljoner kronor)', 'snittanstallda' => 'Antal anställda hos leverantörer (snitt)', 
+  'lokalandel' => 'Andel köp från lokala leverantörer', 'offandel' => 'Leverantörers försäljning till offentlig sektor (procent)', 'r_res' => 'Leverantörers rörelseresultat (procent)', 'a_res' => 'Leverantörers årsresultat (procent)'}
 $kodnyckel = {'A' => 1..3, 'B' => 5..9, 'C' => 10..33, 'D' => 35..35, 'E' => 36..39, 'F' => 41..43, 'G' => 45..47, 'H' => 49..53, 'I' => 55..56, 'J' => 58..63, 'K' => 64..66, 'L' => 68..68, 'M' => 69..75, 'N' => 77..82, 'O' => 84..84, 'P' => 85..85, 'Q' => 86..88, 'R' => 90..93, 'S' => 94..96, 'T' => 97..98, 'U' => 99..99 }
 $branscher = {'A' => 'Jordbruk, skogsbruk och fiske', 'B' => 'Utvinning av mineral', 'C' => 'Tillverkning', 'D' => 'Försörjning av el, gas, värme och kyla', 'E' => 'Vattenförsörjning; avloppsrening, avfallshantering och sanering', 
   'F' => 'Byggverksamhet', 'G' => 'Handel; reparation av motorfordon och motorcyklar', 'H' => 'Transport och magasinering', 'I' => 'Hotell- och restaurangverksamhet', 'J' => 'Informations- och kommunikationsverksamhet', 
@@ -56,6 +57,9 @@ def initiera_databas
     Bignum :aressumma # Rörelseresultat gånger Summa
     Boolean :lokalflagga # Flagga som är true om lokal
   end
+end
+
+def initiera_tabell
   DB.create_table! :tabell do
     primary_key :id
     Integer :ar
@@ -72,6 +76,20 @@ def initiera_databas
     Float :ares
   end
 end
+
+def indexera_databas
+  DB.alter_table :relationer do
+    add_index [:lev, :ar]
+  end
+end
+
+# Inför index efter att data finns på plats
+def indexera_tabell
+  DB.alter_table :tabell do
+    add_index [:snia, :typ]
+  end
+  puts "Klar skapa tabell"
+end 
 
 register do
   def auth(user)
@@ -198,8 +216,8 @@ class Inkopare
         rres_summa = poster.where(ar: ar, kop: @kop).exclude(rressumma: nil).sum(:rressumma)
         summa_oms_lev = poster.where(ar: ar, kop: @kop).exclude(rressumma: nil).sum(:summaomsattning)
       else
-        rres_summa = poster.where(ar: ar, kop: @kop, SNI_A: sni).exclude(rressumma: nil).sum(:rressumma)
-        summa_oms_lev = poster.where(ar: ar, kop: @kop, SNI_A: sni).exclude(rressumma: nil).sum(:summaomsattning)
+        rres_summa = poster.where(ar: ar, kop: @kop, snia: sni).exclude(rressumma: nil).sum(:rressumma)
+        summa_oms_lev = poster.where(ar: ar, kop: @kop, snia: sni).exclude(rressumma: nil).sum(:summaomsattning)
       end
       r_res = 100*rres_summa.to_f/summa_oms_lev
       r_res = nil if r_res.nan? || r_res.infinite?
@@ -240,7 +258,7 @@ end
 def skapa_databas
   initiera_databas
   poster = DB[:relationer]
-  (1..100).each do |sni|
+  (1..3).each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
     if File.file?(filnamn) then
@@ -268,8 +286,8 @@ def skapa_databas
       puts "Ingen fil för SNI:", sni
     end
   end
-  udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
-  #udda_sni = []
+  #udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
+  udda_sni = []
   udda_sni.each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
@@ -298,9 +316,7 @@ def skapa_databas
       puts "Ingen fil för SNI:", sni
     end
   end
-  DB.alter_table :relationer do
-    add_index [:lev, :ar]
-  end
+  indexera_databas
   puts "Klar relationer"
 end
 
@@ -412,6 +428,7 @@ def addera_foretag
 end
 
 def skapa_tabell
+  initiera_tabell
   poster = DB[:relationer]
   kopare = Hash.new
   poster.each do |post|
@@ -434,12 +451,8 @@ def skapa_tabell
       end 
     end   
   end
-  # Inför index efter att data finns på plats
-  DB.alter_table :tabell do
-    add_index [:snia, :typ]
-  end
-  puts "Klar skapa tabell"
-end  
+  indexera_tabell
+end 
 
 def skriv_till_csv
   poster = DB[:relationer]
@@ -454,7 +467,7 @@ end
 
 def skriv_tabell_till_csv
   poster = DB[:tabell]
-  CSV.open("public/tabell.csv", "wb") do |csv|
+  CSV.open("tabell.csv", "wb") do |csv|
     poster.each_with_index do |row, index|
       csv << row.keys if index == 0
       csv << row.values
@@ -462,12 +475,13 @@ def skriv_tabell_till_csv
   end
   puts "Klar skriv Tabell till CSV"
 end
-    
-skapa_databas
-addera_foretag
-skriv_till_csv
-skriv_tabell_till_csv
+
+#skapa_databas
+#addera_foretag
+#skriv_till_csv
 skapa_tabell
+indexera_tabell
+skriv_tabell_till_csv
 inkop = Inkopare.new("2120001579")
 puts "Offandel", inkop.offandel(2017, "A")
 puts "Snittstorlek", inkop.snittstorlek(2017, "A")
@@ -481,6 +495,14 @@ before do
   @user = session[:inloggad]
 end
 
+get "/data" do
+  send_file 'tabell.csv', :type => :csv
+end
+
+get "/transaktioner" do
+  send_file 'upphandlingsdata.csv', :type => :csv   
+end    
+          
 get "/auth" do
   erb :signin
 end
@@ -497,6 +519,49 @@ end
        
 get "/logout" do
   session[:inloggad] = false
+end
+     
+get '/diagram?' do
+  session[:diagram] = params['diagram'] if !params['diagram'].nil?
+  session[:rad] = params['rad'] if !params['rad'].nil?
+  tabell = DB[:tabell]
+  typ = "Kommun" if session[:kopare] == 'kommun'
+  typ = "Landsting" if session[:kopare] == 'lan'
+  typ = "Statlig enhet" if session[:kopare] == 'myndighet'
+  @diagram = Hash.new
+  $ar.each do |ar|
+    @diagram[ar] = [0.0, 0.0, {:kopnamn => 'nada'}]
+    if session[:diagram] == 'inkopsandel' then
+      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:inkopsandel)
+      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: typ).avg(:inkopsandel)
+      @diagram[ar][2] = tabell.select(:kopnamn).where(ar: ar, kop: session[:rad]).first
+    elsif session[:diagram] == 'snittstorlek' then
+      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:snittstorlek)
+      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: typ).avg(:snittstorlek)
+      @diagram[ar][2] = tabell.select(:kopnamn).where(ar: ar, kop: session[:rad]).first
+    elsif session[:diagram] == 'snittanstallda' then
+      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:snittanstallda)
+      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: typ).avg(:snittanstallda)
+      @diagram[ar][2] = tabell.select(:kopnamn).where(ar: ar, kop: session[:rad]).first
+    elsif session[:diagram] == 'lokalandel' then
+      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:lokalandel)
+      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: typ).avg(:lokalandel)
+      @diagram[ar][2] = tabell.select(:kopnamn).where(ar: ar, kop: session[:rad]).first
+    elsif session[:diagram] == 'offandel' then
+      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:offandel)
+      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: typ).avg(:offandel)
+      @diagram[ar][2] = tabell.select(:kopnamn).where(ar: ar, kop: session[:rad]).first
+    elsif session[:diagram] == 'r_res' then
+      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:rres)
+      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: typ).avg(:rres)
+      @diagram[ar][2] = tabell.select(:kopnamn).where(ar: ar, kop: session[:rad]).first
+    elsif session[:diagram] == 'a_res' then
+      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:ares)
+      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: typ).avg(:ares)
+      @diagram[ar][2] = tabell.select(:kopnamn).where(ar: ar, kop: session[:rad]).first
+    end 
+  end
+  erb :diagram
 end
     
 get '/tabell?', :auth => :true do
@@ -531,46 +596,10 @@ get '/tabell?', :auth => :true do
   typ = "Landsting" if session[:kopare] == 'lan'
   typ = "Statlig enhet" if session[:kopare] == 'myndighet'
   @tabell_h = tabell.where(ar: session[:ar], typ: typ, snia: session[:sni]).all
-  # Diagramdel
-  session[:diagram] = params['diagram'] if !params['diagram'].nil?
-  session[:diagram] = params['rad'] if !params['rad'].nil?
-  if session[:sni] == "alla" then
-    tabell = DB[:tabell]
-  else
-    tabell = DB[:tabell].where(snia: session[:sni])
-  end
-  @diagram = Hash.new
-  $ar.each do |ar|
-    @diagram[ar] = [0.0, 0.0]
-    if session[:diagram] == 'inkopsandel' then
-      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:inkopsandel)
-      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: session[:kopare]).avg(:inkopsandel)
-    elsif session[:diagram] == 'snittstorlek' then
-      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:snittstorlek)
-      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: session[:kopare]).avg(:snittstorlek)
-    elsif session[:diagram] == 'snittanstallda' then
-      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:snittanstallda)
-      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: session[:kopare]).avg(:snittanstallda)
-    elsif session[:diagram] == 'lokalandel' then
-      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:lokalandel)
-      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: session[:kopare]).avg(:lokalandel)
-    elsif session[:diagram] == 'offandel' then
-      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:offandel)
-      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: session[:kopare]).avg(:offandel)
-    elsif session[:diagram] == 'r_res' then
-      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:rres)
-      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: session[:kopare]).avg(:rres)
-    elsif session[:diagram] == 'a_res' then
-      @diagram[ar][0] = tabell.where(ar: ar, snia: session[:sni], kop: session[:rad]).avg(:ares)
-      @diagram[ar][1] = tabell.where(ar: ar, snia: session[:sni], typ: session[:kopare]).avg(:ares)
-    end
-  end
   erb :tabell
 end
   
 get '/', :auth => :true do
   erb :index
 end
-
-
 
