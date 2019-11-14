@@ -479,12 +479,12 @@ def skriv_tabell_till_csv
   puts "Klar skriv Tabell till CSV"
 end
 
-skapa_databas
-addera_foretag
-skriv_till_csv
-skapa_tabell
-indexera_tabell
-skriv_tabell_till_csv
+#skapa_databas
+#addera_foretag
+#skriv_till_csv
+#skapa_tabell
+#indexera_tabell
+#skriv_tabell_till_csv
 inkop = Inkopare.new("2120001579")
 puts "Offandel", inkop.offandel(2017, "A")
 puts "Snittstorlek", inkop.snittstorlek(2017, "A")
@@ -492,9 +492,6 @@ puts "Snittanstallda", inkop.snittanstallda(2017, "A")
 puts "Lokalandel", inkop.lokalandel(2017, "A")
 puts "Rörelseresultat", inkop.r_res(2017, "A")
 puts "Årets resultat", inkop.a_res(2017, "A")
-    
-#test
-indexera_databas
   
 # Kolla om inloggad    
 before do
