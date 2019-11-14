@@ -14,6 +14,7 @@ require 'securerandom'
 
 enable :sessions
 set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
+set :environment, :production
 $ar = [2014, 2015, 2016, 2017]
 $nyckeltalsnamn = {'inkopsandel' => 'Inköpsandel (procent av inköparens bruttoomsättning)', 'snittstorlek' => 'Snittstorlek för leverantörer (miljoner kronor)', 'snittanstallda' => 'Antal anställda hos leverantörer (snitt)', 
   'lokalandel' => 'Andel köp från lokala leverantörer', 'offandel' => 'Leverantörers försäljning till offentlig sektor (procent)', 'r_res' => 'Leverantörers rörelseresultat (procent)', 'a_res' => 'Leverantörers årsresultat (procent)'}
@@ -27,6 +28,7 @@ $branscher = {'A' => 'Jordbruk, skogsbruk och fiske', 'B' => 'Utvinning av miner
 DB = Sequel.connect('sqlite://foretag.db')
 def initiera_databas
   # Skapar table och skriver över om den existerar
+  DB.drop_table?(:relationer)
   DB.create_table! :relationer do
     primary_key :id
     Integer :ar
@@ -60,6 +62,7 @@ def initiera_databas
 end
 
 def initiera_tabell
+  DB.drop_table?(:tabell)
   DB.create_table! :tabell do
     primary_key :id
     Integer :ar
@@ -79,14 +82,14 @@ end
 
 def indexera_databas
   DB.alter_table :relationer do
-    add_index [:lev, :ar]
+    add_index([:lev, :ar])
   end
 end
 
 # Inför index efter att data finns på plats
 def indexera_tabell
   DB.alter_table :tabell do
-    add_index [:snia, :typ]
+    add_index([:snia, :typ])
   end
   puts "Klar skapa tabell"
 end 
@@ -258,7 +261,7 @@ end
 def skapa_databas
   initiera_databas
   poster = DB[:relationer]
-  (1..3).each do |sni|
+  (1..100).each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
     if File.file?(filnamn) then
@@ -286,8 +289,8 @@ def skapa_databas
       puts "Ingen fil för SNI:", sni
     end
   end
-  #udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
-  udda_sni = []
+  udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
+  #udda_sni = []
   udda_sni.each do |sni|
     puts sni
     filnamn = "sni/SNI" + sni.to_s + ".csv"
@@ -476,9 +479,9 @@ def skriv_tabell_till_csv
   puts "Klar skriv Tabell till CSV"
 end
 
-#skapa_databas
-#addera_foretag
-#skriv_till_csv
+skapa_databas
+addera_foretag
+skriv_till_csv
 skapa_tabell
 indexera_tabell
 skriv_tabell_till_csv
@@ -489,17 +492,20 @@ puts "Snittanstallda", inkop.snittanstallda(2017, "A")
 puts "Lokalandel", inkop.lokalandel(2017, "A")
 puts "Rörelseresultat", inkop.r_res(2017, "A")
 puts "Årets resultat", inkop.a_res(2017, "A")
+    
+#test
+indexera_databas
   
 # Kolla om inloggad    
 before do
   @user = session[:inloggad]
 end
 
-get "/data" do
+get "/data", :auth => :true do
   send_file 'tabell.csv', :type => :csv
 end
 
-get "/transaktioner" do
+get "/transaktioner", :auth => :true do
   send_file 'upphandlingsdata.csv', :type => :csv   
 end    
           
