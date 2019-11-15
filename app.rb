@@ -14,9 +14,13 @@ require 'securerandom'
 
 enable :sessions
 set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
-set :environment, :production
+set :environment, :development
+configure do
+  mime_type :csv, 'text/csv'
+end
+
 $ar = [2014, 2015, 2016, 2017]
-$nyckeltalsnamn = {'inkopsandel' => 'Inköpsandel (procent av inköparens bruttoomsättning)', 'snittstorlek' => 'Snittstorlek för leverantörer (miljoner kronor)', 'snittanstallda' => 'Antal anställda hos leverantörer (snitt)', 
+$nyckeltalsnamn = {'inkopsandel' => 'Inköpsandel (procent av inköparens bruttoomsättning)', 'snittstorlek' => 'Snittomsättning för leverantörer (kronor)', 'snittanstallda' => 'Antal anställda hos leverantörer (snitt)', 
   'lokalandel' => 'Andel köp från lokala leverantörer', 'offandel' => 'Leverantörers försäljning till offentlig sektor (procent)', 'r_res' => 'Leverantörers rörelseresultat (procent)', 'a_res' => 'Leverantörers årsresultat (procent)'}
 $kodnyckel = {'A' => 1..3, 'B' => 5..9, 'C' => 10..33, 'D' => 35..35, 'E' => 36..39, 'F' => 41..43, 'G' => 45..47, 'H' => 49..53, 'I' => 55..56, 'J' => 58..63, 'K' => 64..66, 'L' => 68..68, 'M' => 69..75, 'N' => 77..82, 'O' => 84..84, 'P' => 85..85, 'Q' => 86..88, 'R' => 90..93, 'S' => 94..96, 'T' => 97..98, 'U' => 99..99 }
 $branscher = {'A' => 'Jordbruk, skogsbruk och fiske', 'B' => 'Utvinning av mineral', 'C' => 'Tillverkning', 'D' => 'Försörjning av el, gas, värme och kyla', 'E' => 'Vattenförsörjning; avloppsrening, avfallshantering och sanering', 
@@ -498,32 +502,39 @@ before do
   @user = session[:inloggad]
 end
 
+# Ladda ner bearbetade data
 get "/data", :auth => :true do
-  send_file 'tabell.csv', :type => :csv
+  send_file 'tabell.csv', :disposition => 'attachment', :filename => 'tabell.csv'
 end
 
+# Ladda ner källdata
 get "/transaktioner", :auth => :true do
-  send_file 'upphandlingsdata.csv', :type => :csv   
+   send_file 'upphandlingsdata.csv', :disposition => 'attachment', :filename => 'transaktioner.csv'
 end    
-          
+
+# Inloggningssidan
 get "/auth" do
   erb :signin
 end
-      
+
+# Tar emot inloggningsuppgifter
 post "/login" do
   if params[:password] == "password" then
     session[:inloggad] = true
+    $fel = false
     redirect "/"
   else
-    @fel = true
+    $fel = true
     redirect "/auth"
   end  
 end
-       
+
+# Loggar ut
 get "/logout" do
   session[:inloggad] = false
 end
-     
+
+# Ritar upp diagram i iframe
 get '/diagram?' do
   session[:diagram] = params['diagram'] if !params['diagram'].nil?
   session[:rad] = params['rad'] if !params['rad'].nil?
@@ -566,18 +577,36 @@ get '/diagram?' do
   end
   erb :diagram
 end
-    
+
+# Tar emot förfrågan om filtrering av tabell
+get "/filter?" do
+  session[:filter] = params[:filter]
+end
+
+# Tar fram tabell med givna val och ev filtrering
 get '/tabell?', :auth => :true do
   # Tabelldel
   session[:ar] = params['ar'] if !params['ar'].nil?
   session[:kopare] = params['kopare'] if !params['kopare'].nil?
   session[:sni] = params['sni'] if !params['sni'].nil?
   session[:sortera] = params['sortera'] if !params['sortera'].nil?
+  # Hanterar val av SNI och filtrering
   if session[:sni] == "alla" then
-    tabell = DB[:tabell]
+    if session[:filter].nil? then
+      tabell = DB[:tabell]
+    else
+      sok = session[:filter] + '%'
+      tabell = DB[:tabell].where(Sequel.ilike(:kopnamn, sok))
+    end
   else
-    tabell = DB[:tabell].where(snia: session[:sni])
+    if session[:filter].nil? then
+      tabell = DB[:tabell].where(snia: session[:sni])
+    else
+      sok = session[:filter] + '%'
+      tabell = DB[:tabell].where(snia: session[:sni]).where(Sequel.ilike(:kopnamn, sok))
+    end  
   end
+  # Hanterar val av sorteringskolumn
   if session[:sortera] == 'kop_namn' then
     tabell = tabell.order(:kopnamn)
   elsif session[:sortera] == 'inkopsandel'
@@ -595,9 +624,11 @@ get '/tabell?', :auth => :true do
   elsif session[:sortera] == 'a_res'
     tabell = tabell.reverse(:ares)
   end
+  # Hanterar val av inköparetyp
   typ = "Kommun" if session[:kopare] == 'kommun'
   typ = "Landsting" if session[:kopare] == 'lan'
   typ = "Statlig enhet" if session[:kopare] == 'myndighet'
+  # Renderar tabell med hjälp av Unpoly
   @tabell_h = tabell.where(ar: session[:ar], typ: typ, snia: session[:sni]).all
   erb :tabell
 end

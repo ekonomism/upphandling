@@ -34,6 +34,12 @@
   <h1 class="h3 mb-3 font-weight-normal">Lösenord</h1>
   <input type="text" name="password" value="">
   <button class="btn btn-lg btn-primary btn-block" type="submit">Logga in</button>
+    <% if $fel == true %>
+   <div class="alert alert-warning alert-dismissible fade show">
+    <strong>Fel lösenord!</strong> Ange lösenord i rutan ovanför
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+   </div>
+    <% end %>
   <p class="mt-5 mb-3 text-muted">Svenskt Näringsliv</p>
   </form>
 </body>
