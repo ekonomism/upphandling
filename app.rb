@@ -387,6 +387,7 @@ def addera_foretag
         lev_oms_summa = poster.where(ar: post[:ar], lev: post[:lev]).exclude(omsattning: nil).avg(:omsattning)
         off_lev_summa =  lev_oms_summa if off_lev_summa > lev_oms_summa # Kvoten får aldrig vara > 1
         summa_off_kvot = post[:summa]*off_lev_summa/lev_oms_summa
+        summa_off_kvot = nil if summa_off_kvot.nan? || summa_off_kvot.infinite?
       rescue ZeroDivisionError
         summa_off_kvot = nil
       end
