@@ -58,7 +58,7 @@ def initiera_databas
     Integer :kkommun # köparens läns/kommunnummer
     Bignum :summaomsattning # Summa gånger omsättning
     Bignum :summaanstallda # Summa gånger anställda
-    Integer :andelofflev # Andel offentliga leveranser gånger summa
+    Integer :summaoffkvot # Summa gånger kvot mellan lev off forsäljning och omsättning
     Bignum :rressumma # Årets resultat gånger Summa
     Bignum :aressumma # Rörelseresultat gånger Summa
     Boolean :lokalflagga # Flagga som är true om lokal
@@ -128,15 +128,25 @@ class Inkopare
   # Ta fram köparens namn
   def kopnamn(ar, sni)
     poster = DB[:relationer]
-    kopnamn = poster.select(:kopnamn).where(ar: ar, snia: sni, kop: @kop).first
-    kopnamn = kopnamn.values[0] if !kopnamn.nil?
+    if sni == "alla" then
+      kopnamn = poster.select(:kopnamn).where(ar: ar, kop: @kop).first
+      kopnamn = kopnamn.values[0] if !kopnamn.nil?
+    else
+      kopnamn = poster.select(:kopnamn).where(ar: ar, snia: sni, kop: @kop).first
+      kopnamn = kopnamn.values[0] if !kopnamn.nil?
+    end
     return kopnamn
   end
   # Ta fram typ
   def typ(ar, sni)
     poster = DB[:relationer]
-    typ = poster.select(:typ).where(ar: ar, snia: sni, kop: @kop).first
-    typ = typ.values[0] if !typ.nil?
+    if sni == "alla" then
+      typ = poster.select(:typ).where(ar: ar, kop: @kop).first
+      typ = typ.values[0] if !typ.nil?
+    else
+      typ = poster.select(:typ).where(ar: ar, snia: sni, kop: @kop).first
+      typ = typ.values[0] if !typ.nil?
+    end
     return typ
   end
   # Andel inköp av kommunens totala omsättning
@@ -216,13 +226,13 @@ class Inkopare
     poster = DB[:relationer]
     begin
       if sni == "alla" then
-        andel_off_lev = poster.where(ar: ar, kop: @kop).exclude(andelofflev: nil).sum(:andelofflev)
-        summa_inkop = poster.where(ar: ar, kop: @kop).exclude(andelofflev: nil).sum(:summa)
+        off_kvot_summa = poster.where(ar: ar, kop: @kop).exclude(summaoffkvot: nil).sum(:summaoffkvot)
+        summa_inkop = poster.where(ar: ar, kop: @kop).exclude(summaoffkvot: nil).sum(:summa)
       else
-        andel_off_lev = poster.where(ar: ar, kop: @kop, snia: sni).exclude(andelofflev: nil).sum(:andelofflev)
-        summa_inkop = poster.where(ar: ar, kop: @kop, snia: sni).exclude(andelofflev: nil).sum(:summa)
+        off_kvot_summa = poster.where(ar: ar, kop: @kop, snia: sni).exclude(summaoffkvot: nil).sum(:summaoffkvot)
+        summa_inkop = poster.where(ar: ar, kop: @kop, snia: sni).exclude(summaoffkvot: nil).sum(:summa)
       end
-      offandel = 100*andel_off_lev.to_f/summa_inkop
+      offandel = 100*off_kvot_summa.to_f/summa_inkop
       offandel = nil if offandel.nan? || offandel.infinite?
     rescue StandardError => e
       offandel = nil
@@ -280,10 +290,9 @@ def skapa_databas
   initiera_databas
   poster = DB[:relationer]
   threads = []
-  snier = (1..100).to_a
-  snier = snier.concat([461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479])
+  snier = (1..3).to_a
+  #snier = snier.concat([461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479])
   snier = snier.each_slice(30).to_a
-  puts snier.inspect
   snier.each do |snigrupp|
     threads << Thread.new do
       snigrupp.each do |sni|
@@ -370,16 +379,21 @@ def addera_foretag
   end  
   puts "Klar kommuner"
   
-  # Skapa variabel med andelen off försäljning för leverantörer till köpare
+  # Skapa variabel med summa gånger offentlig andel för leverantör
   poster.each do |post|
     if !post[:summa].nil? && !post[:omsattning].nil? then
-      off_fors = poster.where(ar: post[:ar], lev: post[:lev]).exclude(summa: nil).sum(:summa)
-      omsattning = poster.where(ar: post[:ar], lev: post[:lev]).exclude(omsattning: nil).avg(:omsattning)
-      andel_off_lev = off_fors*post[:summa]/omsattning
-      poster.where(id: post[:id]).update(andelofflev: andel_off_lev) if !andel_off_lev.nan? && !andel_off_lev.infinite?
+      begin
+        off_lev_summa = poster.where(ar: post[:ar], lev: post[:lev]).exclude(summa: nil).sum(:summa)
+        lev_oms_summa = poster.where(ar: post[:ar], lev: post[:lev]).exclude(omsattning: nil).avg(:omsattning)
+        off_lev_summa =  lev_oms_summa if off_lev_summa > lev_oms_summa # Kvoten får aldrig vara > 1
+        summa_off_kvot = post[:summa]*off_lev_summa/lev_oms_summa
+      rescue ZeroDivisionError
+        summa_off_kvot = nil
+      end
+      poster.where(id: post[:id]).update(summaoffkvot: summa_off_kvot)
     end
   end
-  puts "Klar Andel offentliga leverantörer"
+  puts "Klar Summa gånger leveranser"
   
   # Skapa variabel summa gånger omsättning, anställda och flagga lokal
   poster.each do |post|
@@ -439,7 +453,7 @@ def hamta_tabellhash(kop, ar, sni)
   tabell_hash['ar'] = ar
   tabell_hash['snia'] = sni
   tabell_hash['kopnamn'] = item.kopnamn(ar, sni)
-  tabell_hash['typ'] = item.kopnamn(ar, sni)
+  tabell_hash['typ'] = item.typ(ar, sni)
   tabell_hash['inkopsandel'] = item.inkopsandel(ar, sni)
   tabell_hash['snittstorlek'] = item.snittstorlek(ar, sni)
   tabell_hash['snittanstallda'] = item.snittanstallda(ar, sni)
@@ -502,17 +516,19 @@ skapa_databas
 addera_foretag
 skriv_till_csv
 inkop = Inkopare.new("2120001579")
-puts "Köpnamn", inkop.kopnamn(2017, "A")
-puts "Typ", inkop.typ(2017, "A")
-puts "Offandel", inkop.offandel(2017, "A")
-puts "Snittstorlek", inkop.snittstorlek(2017, "A")
-puts "Snittanstallda", inkop.snittanstallda(2017, "A")
-puts "Lokalandel", inkop.lokalandel(2017, "A")
-puts "Rörelseresultat", inkop.rres(2017, "A")
-puts "Årets resultat", inkop.ares(2017, "A")
+ar = 2017
+puts "Köpnamn", inkop.kopnamn(ar, "A")
+puts "Typ", inkop.typ(ar, "A")
+puts "Inköpsandel", inkop.inkopsandel(ar, "A")
+puts "Offandel", inkop.offandel(ar, "A")
+puts "Snittstorlek", inkop.snittstorlek(ar, "A")
+puts "Snittanstallda", inkop.snittanstallda(ar, "A")
+puts "Lokalandel", inkop.lokalandel(ar, "A")
+puts "Rörelseresultat", inkop.rres(ar, "A")
+puts "Årets resultat", inkop.ares(ar, "A")
 skapa_tabell
 skriv_tabell_till_csv
-  
+
 # Kolla om inloggad    
 before do
   @user = session[:inloggad]
@@ -548,6 +564,7 @@ end
 # Loggar ut
 get "/logout" do
   session[:inloggad] = false
+  redirect "/auth"
 end
 
 # Ritar upp diagram i iframe
