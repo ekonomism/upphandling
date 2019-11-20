@@ -29,7 +29,7 @@ $branscher = {'A' => 'Jordbruk, skogsbruk och fiske', 'B' => 'Utvinning av miner
   'O' => 'Offentlig förvaltning och försvar; obligatorisk socialförsäkring', 'P' => 'Utbildning', 'Q' => 'Vård och omsorg; sociala tjänster', 'R' => 'Kultur, nöje och fritid', 'S' => 'Annan serviceverksamhet', 
   'T' => 'Förvärvsarbete i hushåll; hushållens produktion av diverse varor och tjänster för eget bruk', 'U' => 'Verksamhet vid internationella organisationer, utländska ambassader o.d.' }
 
-DB = Sequel.connect('sqlite://foretag.db')
+DB = Sequel.connect('sqlite://foretag.db', :pool_timeout => 10)
 def initiera_databas
   # Skapar table och skriver över om den existerar
   DB.drop_table?(:relationer)
@@ -125,6 +125,20 @@ class Inkopare
       puts e
     end  
   end
+  # Ta fram köparens namn
+  def kopnamn(ar, sni)
+    poster = DB[:relationer]
+    kopnamn = poster.select(:kopnamn).where(ar: ar, snia: sni, kop: @kop).first
+    kopnamn = kopnamn.values[0] if !kopnamn.nil?
+    return kopnamn
+  end
+  # Ta fram typ
+  def typ(ar, sni)
+    poster = DB[:relationer]
+    typ = poster.select(:typ).where(ar: ar, snia: sni, kop: @kop).first
+    typ = typ.values[0] if !typ.nil?
+    return typ
+  end
   # Andel inköp av kommunens totala omsättning
   def inkopsandel(ar, sni) 
     poster = DB[:relationer]
@@ -216,7 +230,7 @@ class Inkopare
     return offandel
   end
   # Årets resultat i genomsnitt för företag som säljer till köparen
-  def r_res(ar, sni)
+  def rres(ar, sni)
     poster = DB[:relationer]
     begin
       if sni == "alla" then
@@ -234,7 +248,7 @@ class Inkopare
     return r_res
   end
   # Rörelseresultat i genomsnitt för företag som säljer till köparen 
-  def a_res(ar, sni)
+  def ares(ar, sni)
     poster = DB[:relationer]
     begin
       if sni == "alla" then
@@ -265,64 +279,44 @@ end
 def skapa_databas
   initiera_databas
   poster = DB[:relationer]
-  (1..100).each do |sni|
-    puts sni
-    filnamn = "sni/SNI" + sni.to_s + ".csv"
-    if File.file?(filnamn) then
-      CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
-        relation = rensa(relation)
-        $ar.each do |ar|
-          if relation[21].is_integer? && ar == 2014 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[21].split(",")[0].to_i, afakt: relation[22], sni: relation[23], sninamn: relation[24])
+  threads = []
+  snier = (1..100).to_a
+  snier = snier.concat([461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479])
+  snier = snier.each_slice(30).to_a
+  puts snier.inspect
+  snier.each do |snigrupp|
+    threads << Thread.new do
+      snigrupp.each do |sni|
+        puts "SNI", sni, Time.now
+        filnamn = "sni/SNI" + sni.to_s + ".csv"
+        if File.file?(filnamn) then
+          CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
+            relation = rensa(relation)
+            $ar.each do |ar|
+              if relation[21].is_integer? && ar == 2014 then
+                poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[21].split(",")[0].to_i, afakt: relation[22], sni: relation[23], sninamn: relation[24])
+              end
+              if relation[17].is_integer? && ar == 2015 then
+                poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[17].split(",")[0].to_i, afakt: relation[18], sni: relation[19], sninamn: relation[20])
+              end
+              if relation[13].is_integer? && ar == 2016 then
+                poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[13].split(",")[0].to_i, afakt: relation[14], sni: relation[15], sninamn: relation[16])
+              end
+              if relation[9].is_integer? && ar == 2017 then
+                poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[9].split(",")[0].to_i, afakt: relation[10], sni: relation[11], sninamn: relation[12])
+              end
+              if relation[5].is_integer? && ar == 2018 then
+                poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[5].split(",")[0].to_i, afakt: relation[6], sni: relation[7], sninamn: relation[8])
+              end
+            end
           end
-          if relation[17].is_integer? && ar == 2015 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[17].split(",")[0].to_i, afakt: relation[18], sni: relation[19], sninamn: relation[20])
-          end
-          if relation[13].is_integer? && ar == 2016 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[13].split(",")[0].to_i, afakt: relation[14], sni: relation[15], sninamn: relation[16])
-          end
-          if relation[9].is_integer? && ar == 2017 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[9].split(",")[0].to_i, afakt: relation[10], sni: relation[11], sninamn: relation[12])
-          end
-          if relation[5].is_integer? && ar == 2018 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[5].split(",")[0].to_i, afakt: relation[6], sni: relation[7], sninamn: relation[8])
-          end
+        else
+          puts "Ingen fil för SNI:", sni
         end
       end
-    else
-      puts "Ingen fil för SNI:", sni
     end
   end
-  udda_sni = [461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479]  
-  #udda_sni = []
-  udda_sni.each do |sni|
-    puts sni
-    filnamn = "sni/SNI" + sni.to_s + ".csv"
-    if File.file?(filnamn) then
-      CSV.foreach(filnamn, :encoding => 'iso-8859-1', :col_sep => ";") do |relation|
-        relation = rensa(relation)
-        $ar.each do |ar|
-          if relation[21].is_integer? && ar == 2014 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[21].split(",")[0].to_i, afakt: relation[22], sni: relation[23], sninamn: relation[24])
-          end
-          if relation[17].is_integer? && ar == 2015 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[17].split(",")[0].to_i, afakt: relation[18], sni: relation[19], sninamn: relation[20])
-          end
-          if relation[13].is_integer? && ar == 2016 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[13].split(",")[0].to_i, afakt: relation[14], sni: relation[15], sninamn: relation[16])
-          end
-          if relation[9].is_integer? && ar == 2017 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[9].split(",")[0].to_i, afakt: relation[10], sni: relation[11], sninamn: relation[12])
-          end
-          if relation[5].is_integer? && ar == 2018 then
-            poster.insert(ar: ar, lev: relation[0], levnamn: relation[1], kop: relation[2], kopnamn: relation[3], typ: relation[4], summa: relation[5].split(",")[0].to_i, afakt: relation[6], sni: relation[7], sninamn: relation[8])
-          end
-        end
-      end
-    else
-      puts "Ingen fil för SNI:", sni
-    end
-  end
+  threads.each { |thr| thr.join }
   indexera_databas
   puts "Klar relationer"
 end
@@ -330,19 +324,22 @@ end
 def addera_foretag     
   poster = DB[:relationer]
   nummer = 0
+  threads = []
   $ar.each do |ar|
-    filnamn = "foretag_ar_" + ar.to_s + ".csv"
-    CSV.foreach(filnamn, :encoding => 'iso-8859-1') do |foretag|
-      foretag = rensa(foretag)
-      nummer += 1
-      puts nummer if nummer % 10000 == 0
-      if foretag[43].is_integer? && foretag[55].is_integer? && foretag[76].is_integer? then
-        poster.where(ar: ar, lev: foretag[0]).update(lan: foretag[6], kommun: foretag[7], stlkklass: foretag[10], regdatum: foretag[16], anstallda: foretag[35], omsattning: foretag[43].to_i*1000, rres: foretag[55].to_i*1000, ares: foretag[76].to_i*1000)
+    threads << Thread.new do
+      filnamn = "foretag_ar_" + ar.to_s + ".csv"
+      CSV.foreach(filnamn, :encoding => 'iso-8859-1') do |foretag|
+        foretag = rensa(foretag)
+        nummer += 1
+        puts nummer if nummer % 10000 == 0
+        if foretag[43].is_integer? && foretag[55].is_integer? && foretag[76].is_integer? then
+          poster.where(ar: ar, lev: foretag[0]).update(lan: foretag[6], kommun: foretag[7], stlkklass: foretag[10], regdatum: foretag[16], anstallda: foretag[35], omsattning: foretag[43].to_i*1000, rres: foretag[55].to_i*1000, ares: foretag[76].to_i*1000)
+        end
       end
     end
   end
-  puts "Klar företag"
-        
+  threads.each { |thr| thr.join }
+  puts "Klar företag"      
   $kodnyckel.each do |key, value|
     nedre = value.first * 1000 - 1
     ovre = (value.last + 1) * 1000
@@ -434,29 +431,47 @@ def addera_foretag
   puts "Klar rres_oms_summa och ares_oms_summa"
 end
 
+# Tar fram uppgifter om köpare
+def hamta_tabellhash(kop, ar, sni)
+  item = Inkopare.new(kop)
+  tabell_hash = Hash.new
+  tabell_hash['kop'] = kop
+  tabell_hash['ar'] = ar
+  tabell_hash['snia'] = sni
+  tabell_hash['kopnamn'] = item.kopnamn(ar, sni)
+  tabell_hash['typ'] = item.kopnamn(ar, sni)
+  tabell_hash['inkopsandel'] = item.inkopsandel(ar, sni)
+  tabell_hash['snittstorlek'] = item.snittstorlek(ar, sni)
+  tabell_hash['snittanstallda'] = item.snittanstallda(ar, sni)
+  tabell_hash['lokalandel'] = item.lokalandel(ar, sni)
+  tabell_hash['offandel'] = item.offandel(ar, sni)
+  tabell_hash['rres'] = item.rres(ar, sni)
+  tabell_hash['ares'] = item.ares(ar, sni)
+  return tabell_hash
+end  
+
 def skapa_tabell
   initiera_tabell
-  poster = DB[:relationer]
-  kopare = Hash.new
-  poster.each do |post|
-    kopare[post[:kop]] = [post[:kopnamn], post[:typ]]
-  end
+  threads = []
+  col = Hash.new
   tabell = DB[:tabell]
+  poster = DB[:relationer]
+  kopare = poster.select(:kop).distinct.all.map {|x| x[:kop]}
   # Data för samtliga branscher
-  kopare.each do |key, value|
-    item = Inkopare.new(key)
-    $ar.each do |ar|
-      tabell.insert(ar: ar, kop: key, kopnamn: value[0], snia: "alla", typ: value[1], inkopsandel: item.inkopsandel(ar, "alla"), snittstorlek: item.snittstorlek(ar, "alla"), snittanstallda: item.snittanstallda(ar, "alla"), lokalandel: item.lokalandel(ar, "alla"), offandel: item.offandel(ar, "alla"), rres: item.r_res(ar, "alla"), ares: item.a_res(ar, "alla"))
-    end  
-  end   
-  ("A".."U").each do |sni|
-    puts "Avdelning: ", sni
-    kopare.each do |key, value|
-      item = Inkopare.new(key)
+  snier = ("A".."U").to_a.concat(["alla"])
+  snier.each do |sni|
+    puts "Avdelning: ", sni, Time.now
+    kopare.each do |koparen|
       $ar.each do |ar|
-        tabell.insert(ar: ar, kop: key, kopnamn: value[0], snia: sni, typ: value[1], inkopsandel: item.inkopsandel(ar, sni), snittstorlek: item.snittstorlek(ar, sni), snittanstallda: item.snittanstallda(ar, sni), lokalandel: item.lokalandel(ar, sni), offandel: item.offandel(ar, sni), rres: item.r_res(ar, sni), ares: item.a_res(ar, sni))
-      end 
-    end   
+        threads << Thread.new do
+          col[ar] = hamta_tabellhash(koparen, ar, sni)
+        end
+      end
+      threads.each { |thr| thr.join }
+      $ar.each do |ar|
+        tabell.insert(ar: col[ar]['ar'], kop: col[ar]['kop'], kopnamn: col[ar]['kopnamn'], snia: col[ar]['snia'], typ: col[ar]['typ'], inkopsandel: col[ar]['inkopsandel'], snittstorlek: col[ar]['snittstorlek'], snittanstallda: col[ar]['snittanstallda'], lokalandel: col[ar]['lokalandel'], offandel: col[ar]['offandel'], rres: col[ar]['rres'], ares: col[ar]['ares']) 
+      end
+    end
   end
   indexera_tabell
 end 
@@ -483,19 +498,20 @@ def skriv_tabell_till_csv
   puts "Klar skriv Tabell till CSV"
 end
 
-#skapa_databas
-#addera_foretag
-#skriv_till_csv
-#skapa_tabell
-#indexera_tabell
-#skriv_tabell_till_csv
+skapa_databas
+addera_foretag
+skriv_till_csv
 inkop = Inkopare.new("2120001579")
+puts "Köpnamn", inkop.kopnamn(2017, "A")
+puts "Typ", inkop.typ(2017, "A")
 puts "Offandel", inkop.offandel(2017, "A")
 puts "Snittstorlek", inkop.snittstorlek(2017, "A")
 puts "Snittanstallda", inkop.snittanstallda(2017, "A")
 puts "Lokalandel", inkop.lokalandel(2017, "A")
-puts "Rörelseresultat", inkop.r_res(2017, "A")
-puts "Årets resultat", inkop.a_res(2017, "A")
+puts "Rörelseresultat", inkop.rres(2017, "A")
+puts "Årets resultat", inkop.ares(2017, "A")
+skapa_tabell
+skriv_tabell_till_csv
   
 # Kolla om inloggad    
 before do
@@ -535,7 +551,7 @@ get "/logout" do
 end
 
 # Ritar upp diagram i iframe
-get '/diagram?' do
+get '/diagram?', :auth => :true do
   session[:diagram] = params['diagram'] if !params['diagram'].nil?
   session[:rad] = params['rad'] if !params['rad'].nil?
   tabell = DB[:tabell]
