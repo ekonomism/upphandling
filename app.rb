@@ -33,6 +33,7 @@ DB = Sequel.connect('sqlite://foretag.db', :pool_timeout => 10)
 def initiera_databas
   # Skapar table och skriver över om den existerar
   DB.drop_table?(:relationer)
+  sleep 120
   DB.create_table! :relationer do
     primary_key :id
     Integer :ar
@@ -67,6 +68,7 @@ end
 
 def initiera_tabell
   DB.drop_table?(:tabell)
+  sleep 120
   DB.create_table! :tabell do
     primary_key :id
     Integer :ar
@@ -513,9 +515,9 @@ def skriv_tabell_till_csv
   puts "Klar skriv Tabell till CSV"
 end
 
-skapa_databas
-addera_foretag
-skriv_till_csv
+#skapa_databas
+#addera_foretag
+#skriv_till_csv
 inkop = Inkopare.new("2120001579")
 ar = 2017
 puts "Köpnamn", inkop.kopnamn(ar, "A")
@@ -527,8 +529,8 @@ puts "Snittanstallda", inkop.snittanstallda(ar, "A")
 puts "Lokalandel", inkop.lokalandel(ar, "A")
 puts "Rörelseresultat", inkop.rres(ar, "A")
 puts "Årets resultat", inkop.ares(ar, "A")
-skapa_tabell
-skriv_tabell_till_csv
+#skapa_tabell
+#skriv_tabell_till_csv
 
 # Kolla om inloggad    
 before do

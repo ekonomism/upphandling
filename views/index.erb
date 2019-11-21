@@ -35,7 +35,7 @@
   <input id="filter" class="form-control form-control-dark w-100" type="text" placeholder="Filtrera resultat" aria-label="Search">
   <ul class="navbar-nav px-3">
     <li class="nav-item text-nowrap">
-      <a id="filtrera" href="/tabell" up-target="#tabell" up-restore-scroll='true'  up-cache="false" class="nav-link">Filtrera</a>
+      <a id="filtrera" href="/tabell" up-target="#tabell" up-restore-scroll="true"  up-cache="false" class="nav-link">Filtrera</a>
     </li>
   </ul>
   <ul class="navbar-nav px-3">
@@ -57,19 +57,19 @@
         <ul id="meny" class="nav flex-column">
           
           <li class="nav-item">
-            <a class="nav-link" href="/tabell?kopare=kommun" up-target="#tabell, #meny">
+            <a class="nav-link" href="/tabell?kopare=kommun" up-target="#tabell, #meny" up-restore-scroll="true">
               <img src="/icons/octagon.png" alt="icon name">
               Kommuner
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/tabell?kopare=lan" up-target="#tabell, #meny">
+            <a class="nav-link" href="/tabell?kopare=lan" up-target="#tabell, #meny" up-restore-scroll="true">
               <img src="/icons/heart.png" alt="icon name">
               Landsting
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/tabell?kopare=myndighet" up-target="#tabell, #meny">
+            <a class="nav-link" href="/tabell?kopare=myndighet" up-target="#tabell, #meny" up-restore-scroll="true">
               <img src="/icons/archive.png" alt="icon name">
               Myndigheter
             </a>
@@ -83,7 +83,7 @@
         <ul id="ar" class="nav flex-column">  
          <% $ar.each do |ar| %>
           <li class="nav-item">
-            <a class="nav-link <% if session[:ar] == ar %>active<% end %>" href="/tabell?ar=<%= ar %>" up-target="#tabell, #ar" up-cache="false">
+            <a class="nav-link <% if session[:ar] == ar %>active<% end %>" href="/tabell?ar=<%= ar %>" up-target="#tabell, #ar" up-cache="false" up-restore-scroll="true">
               <img src="/icons/calendar.png" alt="icon name">
               <%= ar %>
             </a>
@@ -97,14 +97,14 @@
           
         <ul id="snimeny" class="nav flex-column mb-2">
           <li class="nav-item">
-            <a id="bransch_alla" class="nav-link" href="/tabell?sni=alla" up-target="#tabell, #snimeny">
+            <a id="bransch_alla" class="nav-link" href="/tabell?sni=alla" up-target="#tabell, #snimeny" up-restore-scroll="true">
               <img src="/icons/target.png" alt="icon name">
               Samtliga branscher
             </a>
           </li>
          <% for i in "A".."U" do %>
           <li class="nav-item">
-            <a id="bransch_<%= i %>" class="nav-link" href="/tabell?sni=<%= i %>" up-target="#tabell, #snimeny">
+            <a id="bransch_<%= i %>" class="nav-link" href="/tabell?sni=<%= i %>" up-target="#tabell, #snimeny" up-restore-scroll="true">
               <img src="/icons/target.png" alt="icon name">
               <%= i %>: <%= $branscher[i] %>
             </a>
