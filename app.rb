@@ -88,14 +88,14 @@ end
 
 def indexera_databas
   DB.alter_table :relationer do
-    add_index([:lev, :ar])
+    add_index([:kop, :snia, :ar])
   end
 end
 
 # Inför index efter att data finns på plats
 def indexera_tabell
   DB.alter_table :tabell do
-    add_index([:snia, :typ])
+    add_index([:kop, :snia, :typ, :ar])
   end
   puts "Klar skapa tabell"
 end 
