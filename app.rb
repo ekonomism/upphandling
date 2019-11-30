@@ -162,7 +162,6 @@ class Inkopare
         summa_inkop = poster.where(ar: ar, snia: sni, kop: @kop).exclude(koms: nil).sum(:summa)
         omsattning = poster.where(ar: ar, kop: @kop).exclude(koms: nil).avg(:koms)
       end
-      puts ar, @kop
       inkopsandel = 100*summa_inkop.to_f/omsattning
       inkopsandel = nil if inkopsandel.nan? || inkopsandel.infinite?
     rescue StandardError => e
