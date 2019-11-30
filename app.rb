@@ -360,7 +360,7 @@ def addera_foretag
   end  
   puts "Klar avdelning"
       
-  CSV.foreach("kommunkodorgnr.csv", :encoding => 'iso-8859-1', :col_sep => ";") do |rad|
+  CSV.foreach("kommunkodorgnr.csv", :col_sep => ";") do |rad|
     rad = rensa(rad)
     puts rad.inspect
     poster.where(kop: rad[2]).update(kkommun: rad[0].sub(/^0+/, ""))
@@ -516,9 +516,9 @@ def skriv_tabell_till_csv
   puts "Klar skriv Tabell till CSV"
 end
 
-#skapa_databas
-#addera_foretag
-#skriv_till_csv
+skapa_databas
+addera_foretag
+skriv_till_csv
 inkop = Inkopare.new("2120001124")
 ar = 2017
 puts "Köpnamn", inkop.kopnamn(ar, "alla")
@@ -530,8 +530,8 @@ puts "Snittanstallda", inkop.snittanstallda(ar, "alla")
 puts "Lokalandel", inkop.lokalandel(ar, "alla")
 puts "Rörelseresultat", inkop.rres(ar, "alla")
 puts "Årets resultat", inkop.ares(ar, "alla")
-#skapa_tabell
-#skriv_tabell_till_csv
+skapa_tabell
+skriv_tabell_till_csv
 
 # Kolla om inloggad    
 before do
