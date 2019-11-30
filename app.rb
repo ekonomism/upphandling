@@ -29,7 +29,7 @@ $branscher = {'A' => 'Jordbruk, skogsbruk och fiske', 'B' => 'Utvinning av miner
   'O' => 'Offentlig förvaltning och försvar; obligatorisk socialförsäkring', 'P' => 'Utbildning', 'Q' => 'Vård och omsorg; sociala tjänster', 'R' => 'Kultur, nöje och fritid', 'S' => 'Annan serviceverksamhet', 
   'T' => 'Förvärvsarbete i hushåll; hushållens produktion av diverse varor och tjänster för eget bruk', 'U' => 'Verksamhet vid internationella organisationer, utländska ambassader o.d.' }
 
-DB = Sequel.connect('sqlite://foretag.db', :pool_timeout => 10)
+DB = Sequel.connect('sqlite://foretag.db', :pool_timeout => 250)
 def initiera_databas
   # Skapar table och skriver över om den existerar
   DB.drop_table?(:relationer)
@@ -42,7 +42,7 @@ def initiera_databas
     String :kop
     String :kopnamn
     String :typ
-    Integer :summa
+    Bignum :summa
     Integer :afakt
     Integer :sni
     String :snia
@@ -52,14 +52,14 @@ def initiera_databas
     Integer :stlkklass
     Date :regdatum
     Integer :anstallda
-    Integer :omsattning # Leverantörers omsättning
-    Integer :rres
-    Integer :ares
-    Integer :koms
+    Bignum :omsattning # Leverantörers omsättning
+    Bignum :rres
+    Bignum :ares
+    Bignum :koms
     Integer :kkommun # köparens läns/kommunnummer
     Bignum :summaomsattning # Summa gånger omsättning
     Bignum :summaanstallda # Summa gånger anställda
-    Integer :summaoffkvot # Summa gånger kvot mellan lev off forsäljning och omsättning
+    Bignum :summaoffkvot # Summa gånger kvot mellan lev off forsäljning och omsättning
     Bignum :rressumma # Årets resultat gånger Summa
     Bignum :aressumma # Rörelseresultat gånger Summa
     Boolean :lokalflagga # Flagga som är true om lokal
@@ -162,6 +162,7 @@ class Inkopare
         summa_inkop = poster.where(ar: ar, snia: sni, kop: @kop).exclude(koms: nil).sum(:summa)
         omsattning = poster.where(ar: ar, kop: @kop).exclude(koms: nil).avg(:koms)
       end
+      puts ar, @kop
       inkopsandel = 100*summa_inkop.to_f/omsattning
       inkopsandel = nil if inkopsandel.nan? || inkopsandel.infinite?
     rescue StandardError => e
@@ -518,17 +519,17 @@ end
 #skapa_databas
 #addera_foretag
 #skriv_till_csv
-inkop = Inkopare.new("2120001579")
+inkop = Inkopare.new("2120001124")
 ar = 2017
-puts "Köpnamn", inkop.kopnamn(ar, "A")
-puts "Typ", inkop.typ(ar, "A")
-puts "Inköpsandel", inkop.inkopsandel(ar, "A")
-puts "Offandel", inkop.offandel(ar, "A")
-puts "Snittstorlek", inkop.snittstorlek(ar, "A")
-puts "Snittanstallda", inkop.snittanstallda(ar, "A")
-puts "Lokalandel", inkop.lokalandel(ar, "A")
-puts "Rörelseresultat", inkop.rres(ar, "A")
-puts "Årets resultat", inkop.ares(ar, "A")
+puts "Köpnamn", inkop.kopnamn(ar, "alla")
+puts "Typ", inkop.typ(ar, "alla")
+puts "Inköpsandel", inkop.inkopsandel(ar, "alla")
+puts "Offandel", inkop.offandel(ar, "alla")
+puts "Snittstorlek", inkop.snittstorlek(ar, "alla")
+puts "Snittanstallda", inkop.snittanstallda(ar, "alla")
+puts "Lokalandel", inkop.lokalandel(ar, "alla")
+puts "Rörelseresultat", inkop.rres(ar, "alla")
+puts "Årets resultat", inkop.ares(ar, "alla")
 #skapa_tabell
 #skriv_tabell_till_csv
 
