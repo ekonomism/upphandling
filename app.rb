@@ -89,6 +89,7 @@ end
 def indexera_databas
   DB.alter_table :relationer do
     add_index([:kop, :snia, :ar])
+    add_index([:lev, :ar])
   end
 end
 
