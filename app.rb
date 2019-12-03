@@ -359,6 +359,9 @@ def addera_foretag
     poster.where(sni: nedre..ovre).update(snia: key)
   end  
   puts "Klar avdelning"
+  
+  # Behåll bara privata aktiebolag      
+  poster.where(stlkklass: nil).delete
       
   CSV.foreach("kommunkodorgnr.csv", :col_sep => ";") do |rad|
     rad = rensa(rad)
@@ -555,7 +558,7 @@ end
 
 # Tar emot inloggningsuppgifter
 post "/login" do
-  if params[:password] == "password" then
+  if params[:password] == "ramavtal" then
     session[:inloggad] = true
     $fel = false
     redirect "/"
