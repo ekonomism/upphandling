@@ -42,7 +42,7 @@ def initiera_databas
     String :kop
     String :kopnamn
     String :typ
-    Bignum :summa
+    Float :summa
     Integer :afakt
     Integer :sni
     String :snia
@@ -52,16 +52,16 @@ def initiera_databas
     Integer :stlkklass
     Date :regdatum
     Integer :anstallda
-    Bignum :omsattning # Leverantörers omsättning
-    Bignum :rres
-    Bignum :ares
-    Bignum :koms
+    Float :omsattning # Leverantörers omsättning
+    Float :rres
+    Float :ares
+    Float :koms
     Integer :kkommun # köparens läns/kommunnummer
-    Bignum :summaomsattning # Summa gånger omsättning
-    Bignum :summaanstallda # Summa gånger anställda
-    Bignum :summaoffkvot # Summa gånger kvot mellan lev off forsäljning och omsättning
-    Bignum :rressumma # Årets resultat gånger Summa
-    Bignum :aressumma # Rörelseresultat gånger Summa
+    Float :summaomsattning # Summa gånger omsättning
+    Float :summaanstallda # Summa gånger anställda
+    Float :summaoffkvot # Summa gånger kvot mellan lev off forsäljning och omsättning
+    Float :rressumma # Årets resultat gånger Summa
+    Float :aressumma # Rörelseresultat gånger Summa
     Boolean :lokalflagga # Flagga som är true om lokal
   end
 end
@@ -293,8 +293,8 @@ def skapa_databas
   initiera_databas
   poster = DB[:relationer]
   threads = []
-  snier = (1..3).to_a
-  #snier = snier.concat([461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479])
+  snier = (1..100).to_a
+  snier = snier.concat([461, 462, 463, 464, 465, 466, 467, 468, 469, 4641, 4642, 4643, 4644, 4645, 4646, 4647, 4648, 4649, 471, 472, 473, 474, 475, 476, 477, 478, 479])
   snier = snier.each_slice(30).to_a
   snier.each do |snigrupp|
     threads << Thread.new do
@@ -516,9 +516,9 @@ def skriv_tabell_till_csv
   puts "Klar skriv Tabell till CSV"
 end
 
-skapa_databas
-addera_foretag
-skriv_till_csv
+#skapa_databas
+#addera_foretag
+#skriv_till_csv
 inkop = Inkopare.new("2120001124")
 ar = 2017
 puts "Köpnamn", inkop.kopnamn(ar, "alla")
@@ -530,8 +530,8 @@ puts "Snittanstallda", inkop.snittanstallda(ar, "alla")
 puts "Lokalandel", inkop.lokalandel(ar, "alla")
 puts "Rörelseresultat", inkop.rres(ar, "alla")
 puts "Årets resultat", inkop.ares(ar, "alla")
-skapa_tabell
-skriv_tabell_till_csv
+#skapa_tabell
+#skriv_tabell_till_csv
 
 # Kolla om inloggad    
 before do
