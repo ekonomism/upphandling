@@ -519,9 +519,9 @@ def skriv_tabell_till_csv
   puts "Klar skriv Tabell till CSV"
 end
 
-#skapa_databas
-#addera_foretag
-#skriv_till_csv
+skapa_databas
+addera_foretag
+skriv_till_csv
 inkop = Inkopare.new("2120001124")
 ar = 2017
 puts "Köpnamn", inkop.kopnamn(ar, "alla")
@@ -533,8 +533,8 @@ puts "Snittanstallda", inkop.snittanstallda(ar, "alla")
 puts "Lokalandel", inkop.lokalandel(ar, "alla")
 puts "Rörelseresultat", inkop.rres(ar, "alla")
 puts "Årets resultat", inkop.ares(ar, "alla")
-#skapa_tabell
-#skriv_tabell_till_csv
+skapa_tabell
+skriv_tabell_till_csv
 
 # Kolla om inloggad    
 before do
