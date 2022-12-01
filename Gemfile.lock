@@ -2,32 +2,32 @@ GEM
   remote: https://rubygems.org/
   specs:
     csv (3.1.2)
-    ipaddr (1.2.2)
     mini_magick (4.9.5)
     mini_portile2 (2.4.0)
-    mustermann (1.0.3)
+    mustermann (2.0.2)
+      ruby2_keywords (~> 0.0.1)
     nio4r (2.5.2)
     nokogiri (1.10.4)
       mini_portile2 (~> 2.4.0)
     openssl (2.1.2)
-      ipaddr
     puma (4.2.1)
       nio4r (~> 2.0)
-    rack (2.0.7)
-    rack-protection (2.0.7)
+    rack (2.2.4)
+    rack-protection (2.2.3)
       rack
+    ruby2_keywords (0.0.5)
     rubyXL (3.4.6)
       nokogiri (>= 1.4.4)
       rubyzip (>= 1.1.6)
     rubyzip (2.0.0)
     sequel (5.25.0)
-    sinatra (2.0.7)
-      mustermann (~> 1.0)
-      rack (~> 2.0)
-      rack-protection (= 2.0.7)
+    sinatra (2.2.3)
+      mustermann (~> 2.0)
+      rack (~> 2.2)
+      rack-protection (= 2.2.3)
       tilt (~> 2.0)
     sqlite3 (1.4.1)
-    tilt (2.0.10)
+    tilt (2.0.11)
 
 PLATFORMS
   ruby
